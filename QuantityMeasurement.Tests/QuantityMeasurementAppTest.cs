@@ -3,7 +3,7 @@ namespace QuantityMeasurement.Tests
 {
     public class QuantityMeasurementAppTest
     {
-        
+        // ==================== Feet Equality Tests (UC1) ====================
         [Fact]
         public void TestFeetEquality_SameValue()
         {
@@ -77,6 +77,61 @@ namespace QuantityMeasurement.Tests
             // Act: Compare the two Feet objects
             bool isEqual = firstFeetValue.Equals(secondFeetValue);
             // Assert: Same negative values should be equal
+            Assert.True(isEqual);
+        }
+
+        // ==================== Inches Equality Tests (UC2) ====================
+        [Fact]
+        public void TestInchesEquality_SameValue()
+        {
+            // Arrange: Create two Inches objects with the same value
+            Inches firstInchesValue = new Inches(1.0);
+            Inches secondInchesValue = new Inches(1.0);
+            // Act: Compare the two Inches objects
+            bool isEqual = firstInchesValue.Equals(secondInchesValue);
+            // Assert: Both should be considered equal
+            Assert.True(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_DifferentValue()
+        {
+            // Arrange: Create two Inches objects with different values
+            Inches firstInchesValue = new Inches(1.0);
+            Inches secondInchesValue = new Inches(2.0);
+            // Act: Compare the two Inches objects
+            bool isEqual = firstInchesValue.Equals(secondInchesValue);
+            // Assert: They should not be considered equal
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_NullComparison()
+        {
+            // Arrange: Create an Inches object
+            Inches firstInchesValue = new Inches(1.0);
+            // Act: Compare with null
+            bool isEqual = firstInchesValue.Equals(null);
+            // Assert: Comparison with null should return false
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_DifferentClass()
+        {
+            // Arrange: Create an Inches object and a non-Inches object
+            Inches firstInchesValue = new Inches(1.0);
+            object differentClassObject = "Not an Inches object";
+            // Act: Compare Inches with a different type
+            bool isEqual = firstInchesValue.Equals(differentClassObject);
+            // Assert: Different types should not be equal
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_SameReference()
+        {
+            // Arrange: Create an Inches object
+            Inches firstInchesValue = new Inches(1.0);
+            // Act: Compare the object with itself (same reference)
+            bool isEqual = firstInchesValue.Equals(firstInchesValue);
+            // Assert: Same reference should always be equal (reflexive property)
             Assert.True(isEqual);
         }
     }
