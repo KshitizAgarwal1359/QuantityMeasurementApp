@@ -1,56 +1,55 @@
 namespace QuantityMeasurement.Models
 {
-    //weightUnit enum is a standalone, top-level class encapsulating all supported weight units.
-    //each unit carries its conversion factor relative to the base unit (kilogram).
-    //following the UC8 pattern: WeightUnit has full responsibility for unit conversions.
-    //this mirrors the LengthUnit design, reinforcing consistency and maintainability.
-    //Conversion factors:
-    //KILOGRAM: 1.0 (base unit)
+    //WeightUnit is a sealed class implementing IMeasurable, replacing the previous enum.
+    // Each static readonly instance represents a supported weight unit with its conversion factor relative to the base unit (kilogram).
+    //uc10 Refactoring: Converted from enum to sealed class (mirroring LengthUnit) so it can implement the IMeasurable interface. Consistency across unit types reinforces the scalable generic design pattern. 
+    //Conversion factors relative to kilogram (base unit):
+    //KILOGRAM: 1.0
     //GRAM: 0.001 (1 g = 0.001 kg)
     //POUND: 0.453592 (1 lb ≈ 0.453592 kg)
-    //Enum constants are inherently immutable and thread-safe.
-    public enum WeightUnit
+    public sealed class WeightUnit : IMeasurable
     {
-        //base unit: 1 kilogram = 1 kilogram (conversion factor = 1.0)
-        KILOGRAM,
-        //1 gram = 0.001 kilogram (conversion factor = 0.001)
-        GRAM,
-        //1 pound ≈ 0.453592 kilogram (conversion factor = 0.453592)
-        POUND
-    }
-    //extension methods for WeightUnit providing conversion responsibility.
-    //Mirrors the LengthUnitExtensions design from uc8. 
-    //Centralizes all weight unit-specific conversion logic:
-    //GetConversionFactor(): Returns the conversion factor to the base unit (kilogram)
-    //ConvertToBaseUnit(): Converts a value in this unit to the base unit (kilogram)
-    //ConvertFromBaseUnit(): Converts a value from the base unit (kilogram) to this unit
-    public static class WeightUnitExtensions
-    {
-        //Returns the conversion factor to convert the given unit to the base unit (kilogram).
-        //Formula: baseValue = value * conversionFactor
-        public static double GetConversionFactor(this WeightUnit weightUnit)
+        // Static readonly instances — immutable, thread-safe, globally accessible
+        // Base unit: 1 kilogram = 1 kilogram
+        public static readonly WeightUnit KILOGRAM = new WeightUnit("KILOGRAM", "kg", 1.0);
+        // 1 gram = 0.001 kilogram
+        public static readonly WeightUnit GRAM = new WeightUnit("GRAM", "g", 0.001);
+        // 1 pound ≈ 0.453592 kilogram
+        public static readonly WeightUnit POUND = new WeightUnit("POUND", "lb", 0.453592);
+        private readonly string name;
+        private readonly string unitLabel;
+        private readonly double conversionFactor;
+        //private constructor prevents external instantiation — only predefined instances exist
+        private WeightUnit(string name, string unitLabel, double conversionFactor)
         {
-            return weightUnit switch
-            {
-                WeightUnit.KILOGRAM => 1.0,
-                WeightUnit.GRAM => 0.001,
-                WeightUnit.POUND => 0.453592,
-                _ => throw new ArgumentException($"Unsupported unit: {weightUnit}")
-            };
+            this.name = name;
+            this.unitLabel = unitLabel;
+            this.conversionFactor = conversionFactor;
+        }
+        //returns the conversion factor to convert this unit to the base unit (kilogram).
+        public double GetConversionFactor()
+        {
+            return this.conversionFactor;
         }
         //converts a value in this unit to the base unit (kilogram).
-        //example: WeightUnit.GRAM.ConvertToBaseUnit(1000.0) returns 1.0
-        //example: WeightUnit.POUND.ConvertToBaseUnit(1.0) returns 0.453592
-        public static double ConvertToBaseUnit(this WeightUnit weightUnit, double value)
+        public double ConvertToBaseUnit(double value)
         {
-            return value * weightUnit.GetConversionFactor();
+            return value * this.conversionFactor;
         }
         //converts a value from the base unit (kilogram) to this unit.
-        //example: WeightUnit.GRAM.ConvertFromBaseUnit(1.0) returns 1000.0
-        //example: WeightUnit.POUND.ConvertFromBaseUnit(0.453592) returns 1.0
-        public static double ConvertFromBaseUnit(this WeightUnit weightUnit, double baseValue)
+        public double ConvertFromBaseUnit(double baseValue)
         {
-            return baseValue / weightUnit.GetConversionFactor();
+            return baseValue / this.conversionFactor;
+        }
+        //returns the human-readable display label (e.g., "kg", "g", "lb").
+        public string GetUnitName()
+        {
+            return this.unitLabel;
+        }
+        //returns the enum-style name for backward compatibility.
+        public override string ToString()
+        {
+            return this.name;
         }
     }
 }

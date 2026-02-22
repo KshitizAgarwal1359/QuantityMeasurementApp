@@ -76,5 +76,29 @@ namespace QuantityMeasurement.Services
         {
             return QuantityWeight.Add(first, second, targetUnit);
         }
+        // UC10: Generic comparison method — works with any measurement category
+        public bool CompareQuantityMeasurements<U>(Quantity<U>? first, Quantity<U>? second) where U : class, IMeasurable
+        {
+            if (first is null)
+            {
+                return false;
+            }
+            return first.Equals(second);
+        }
+        // UC10: Generic conversion method — works with any measurement category
+        public double ConvertQuantityUnits<U>(double value, U sourceUnit, U targetUnit) where U : class, IMeasurable
+        {
+            return Quantity<U>.Convert(value, sourceUnit, targetUnit);
+        }
+        // UC10: Generic addition method — works with any measurement category
+        public Quantity<U> AddQuantityMeasurements<U>(Quantity<U> first, Quantity<U> second) where U : class, IMeasurable
+        {
+            return Quantity<U>.Add(first, second);
+        }
+        // UC10: Generic addition with target unit — works with any measurement category
+        public Quantity<U> AddQuantityMeasurements<U>(Quantity<U> first, Quantity<U> second, U targetUnit) where U : class, IMeasurable
+        {
+            return Quantity<U>.Add(first, second, targetUnit);
+        }
     }
 }

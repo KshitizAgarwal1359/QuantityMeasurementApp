@@ -1,4 +1,5 @@
 using QuantityMeasurement.Models;
+using QuantityMeasurement.Services;
 namespace QuantityMeasurement.Tests
 {
     public class QuantityMeasurementAppTest
@@ -1250,6 +1251,179 @@ namespace QuantityMeasurement.Tests
             QuantityWeight result = first.Add(second);
             Assert.Equal(2e6, result.MeasurementValue, 6);
             Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+
+        // ==================== Generic Quantity<U> Tests (UC10) ====================
+
+        // IMeasurable interface: LengthUnit implements all required methods
+        [Fact]
+        public void TestIMeasurableInterface_LengthUnitImplementation()
+        {
+            IMeasurable unit = LengthUnit.FEET;
+            Assert.Equal(1.0, unit.GetConversionFactor(), 6);
+            Assert.Equal(5.0, unit.ConvertToBaseUnit(5.0), 6);
+            Assert.Equal(2.0, unit.ConvertFromBaseUnit(2.0), 6);
+            Assert.Equal("feet", unit.GetUnitName());
+        }
+        // IMeasurable interface: WeightUnit implements all required methods
+        [Fact]
+        public void TestIMeasurableInterface_WeightUnitImplementation()
+        {
+            IMeasurable unit = WeightUnit.KILOGRAM;
+            Assert.Equal(1.0, unit.GetConversionFactor(), 6);
+            Assert.Equal(5.0, unit.ConvertToBaseUnit(5.0), 6);
+            Assert.Equal(2.0, unit.ConvertFromBaseUnit(2.0), 6);
+            Assert.Equal("kg", unit.GetUnitName());
+        }
+        // IMeasurable interface: Consistent behavior across unit types
+        [Fact]
+        public void TestIMeasurableInterface_ConsistentBehavior()
+        {
+            IMeasurable lengthUnit = LengthUnit.INCH;
+            IMeasurable weightUnit = WeightUnit.GRAM;
+            // Both should support the same interface contract
+            Assert.Equal(12.0, lengthUnit.ConvertFromBaseUnit(1.0), 6);
+            Assert.Equal(1000.0, weightUnit.ConvertFromBaseUnit(1.0), 6);
+        }
+        // Generic Quantity<LengthUnit> equality works identically to original QuantityLength
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Equality()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> twelveInches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Assert.True(oneFoot.Equals(twelveInches));
+        }
+        // Generic Quantity<WeightUnit> equality works identically to original QuantityWeight
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Equality()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> thousandGrams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Assert.True(oneKg.Equals(thousandGrams));
+        }
+        // Generic Quantity<LengthUnit> conversion works correctly
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Conversion()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // Generic Quantity<WeightUnit> conversion works correctly
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Conversion()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> converted = oneKg.ConvertTo(WeightUnit.GRAM);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, converted.Unit);
+        }
+        // Generic Quantity<LengthUnit> addition works correctly
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Addition()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> twelveInches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = oneFoot.Add(twelveInches, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Generic Quantity<WeightUnit> addition works correctly
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Addition()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> thousandGrams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = oneKg.Add(thousandGrams, WeightUnit.KILOGRAM);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Cross-category prevention: Quantity<LengthUnit> and Quantity<WeightUnit> are distinct types
+        [Fact]
+        public void TestCrossCategoryPrevention_LengthVsWeight()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            // C# reified generics ensure these are different types at runtime
+            Assert.False(oneFoot.Equals(oneKg));
+            Assert.NotEqual(oneFoot.GetType(), oneKg.GetType());
+        }
+        // Constructor validation: NaN value rejected
+        [Fact]
+        public void TestGenericQuantity_ConstructorValidation_InvalidValue()
+        {
+            Assert.Throws<ArgumentException>(() => new Quantity<LengthUnit>(double.NaN, LengthUnit.FEET));
+            Assert.Throws<ArgumentException>(() => new Quantity<WeightUnit>(double.PositiveInfinity, WeightUnit.KILOGRAM));
+        }
+        // Type alias backward compatibility: QuantityLength IS Quantity<LengthUnit>
+        [Fact]
+        public void TestTypeAlias_BackwardCompatibility()
+        {
+            QuantityLength fromAlias = new QuantityLength(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> fromGeneric = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Assert.Equal(fromAlias.GetType(), fromGeneric.GetType());
+            Assert.True(fromAlias.Equals(fromGeneric));
+        }
+        // Generic service method works with both categories
+        [Fact]
+        public void TestGenericServiceMethod_Equality()
+        {
+            QuantityMeasurementService service = new QuantityMeasurementService();
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> inches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Assert.True(service.CompareQuantityMeasurements(feet, inches));
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> grams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Assert.True(service.CompareQuantityMeasurements(kg, grams));
+        }
+        // DRY validation: same generic logic handles both length and weight
+        [Fact]
+        public void TestDRYValidation_SingleLogicForAllCategories()
+        {
+            // Length addition
+            Quantity<LengthUnit> lengthResult = Quantity<LengthUnit>.Add(
+                new Quantity<LengthUnit>(1.0, LengthUnit.FEET),
+                new Quantity<LengthUnit>(12.0, LengthUnit.INCH));
+            Assert.Equal(2.0, lengthResult.MeasurementValue, 6);
+            // Weight addition — same Add logic, different unit type
+            Quantity<WeightUnit> weightResult = Quantity<WeightUnit>.Add(
+                new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM),
+                new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM));
+            Assert.Equal(2.0, weightResult.MeasurementValue, 6);
+        }
+        // Immutability: operations return new instances
+        [Fact]
+        public void TestImmutability_GenericQuantity()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> converted = original.ConvertTo(LengthUnit.INCH);
+            Quantity<LengthUnit> added = original.Add(new Quantity<LengthUnit>(1.0, LengthUnit.FEET));
+            // Original is unchanged
+            Assert.Equal(5.0, original.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, original.Unit);
+            // Results are different instances
+            Assert.NotSame(original, converted);
+            Assert.NotSame(original, added);
+        }
+        // HashCode consistency: equal quantities have equal hash codes
+        [Fact]
+        public void TestHashCode_GenericQuantity_Consistency()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            // Equal measurements should have equal hash codes
+            Assert.True(a.Equals(b));
+            Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        }
+        // ToString uses IMeasurable.GetUnitName() for display
+        [Fact]
+        public void TestToString_GenericQuantity_UsesUnitName()
+        {
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(3.0, WeightUnit.KILOGRAM);
+            Assert.Equal("5 feet", feet.ToString());
+            Assert.Equal("3 kg", kg.ToString());
         }
     }
 }
