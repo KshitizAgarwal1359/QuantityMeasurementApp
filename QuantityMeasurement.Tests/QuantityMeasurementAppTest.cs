@@ -852,5 +852,147 @@ namespace QuantityMeasurement.Tests
             Assert.Equal(0.666667, result.MeasurementValue, 4);
             Assert.Equal(LengthUnit.YARDS, result.Unit);
         }
+        //Refactored Unit Enum Tests (UC8)
+        //LengthUnit.FEET has correct conversion factor of 1.0
+        [Fact]
+        public void TestLengthUnitEnum_FeetConstant()
+        {
+            Assert.Equal(1.0, LengthUnit.FEET.GetConversionFactor(), 6);
+        }
+        //LengthUnit.INCHES has correct conversion factor of 1/12
+        [Fact]
+        public void TestLengthUnitEnum_InchesConstant()
+        {
+            Assert.Equal(1.0 / 12.0, LengthUnit.INCH.GetConversionFactor(), 6);
+        }
+        //LengthUnit.YARDS has correct conversion factor of 3.0
+        [Fact]
+        public void TestLengthUnitEnum_YardsConstant()
+        {
+            Assert.Equal(3.0, LengthUnit.YARDS.GetConversionFactor(), 6);
+        }
+        //LengthUnit.CENTIMETERS has correct conversion factor
+        [Fact]
+        public void TestLengthUnitEnum_CentimetersConstant()
+        {
+            Assert.Equal(0.393701 / 12.0, LengthUnit.CENTIMETERS.GetConversionFactor(), 6);
+        }
+        //ConvertToBaseUnit: FEET to FEET (already in base unit, returns unchanged)
+        [Fact]
+        public void TestConvertToBaseUnit_FeetToFeet()
+        {
+            double result = LengthUnit.FEET.ConvertToBaseUnit(5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        //ConvertToBaseUnit: INCHES to FEET (12 inches = 1 foot)
+        [Fact]
+        public void TestConvertToBaseUnit_InchesToFeet()
+        {
+            double result = LengthUnit.INCH.ConvertToBaseUnit(12.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //ConvertToBaseUnit: YARDS to FEET (1 yard = 3 feet)
+        [Fact]
+        public void TestConvertToBaseUnit_YardsToFeet()
+        {
+            double result = LengthUnit.YARDS.ConvertToBaseUnit(1.0);
+            Assert.Equal(3.0, result, 6);
+        }
+        //ConvertToBaseUnit: CENTIMETERS to FEET (30.48 cm = ~1 foot)
+        [Fact]
+        public void TestConvertToBaseUnit_CentimetersToFeet()
+        {
+            double result = LengthUnit.CENTIMETERS.ConvertToBaseUnit(30.48);
+            Assert.Equal(1.0, result, 2);
+        }
+        //ConvertFromBaseUnit: FEET to FEET (already in base unit)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToFeet()
+        {
+            double result = LengthUnit.FEET.ConvertFromBaseUnit(2.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to INCHES (1 foot = 12 inches)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToInches()
+        {
+            double result = LengthUnit.INCH.ConvertFromBaseUnit(1.0);
+            Assert.Equal(12.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to YARDS (3 feet = 1 yard)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToYards()
+        {
+            double result = LengthUnit.YARDS.ConvertFromBaseUnit(3.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to CENTIMETERS (1 foot = ~30.48 cm)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToCentimeters()
+        {
+            double result = LengthUnit.CENTIMETERS.ConvertFromBaseUnit(1.0);
+            Assert.Equal(30.48, result, 2);
+        }
+        //Refactored QuantityLength equality still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_Equality()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            Assert.True(oneFoot.Equals(twelveInches));
+        }
+        //Refactored QuantityLength ConvertTo still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_ConvertTo()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        //Refactored QuantityLength Add still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_Add()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = oneFoot.Add(twelveInches, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        //Refactored Add with explicit target unit
+        [Fact]
+        public void TestQuantityLengthRefactored_AddWithTargetUnit()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = oneFoot.Add(twelveInches, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        //Round-trip conversion using refactored unit methods
+        [Fact]
+        public void TestRoundTripConversion_RefactoredDesign()
+        {
+            double originalValue = 5.5;
+            // Feet -> Base -> Inches -> Base -> Feet
+            double baseValue = LengthUnit.FEET.ConvertToBaseUnit(originalValue);
+            double inInches = LengthUnit.INCH.ConvertFromBaseUnit(baseValue);
+            double backToBase = LengthUnit.INCH.ConvertToBaseUnit(inInches);
+            double backToFeet = LengthUnit.FEET.ConvertFromBaseUnit(backToBase);
+            Assert.Equal(originalValue, backToFeet, 6);
+        }
+        //Unit immutability: enum values are constant and thread-safe
+        [Fact]
+        public void TestUnitImmutability()
+        {
+            //Calling GetConversionFactor() multiple times returns the same value
+            double factor1 = LengthUnit.FEET.GetConversionFactor();
+            double factor2 = LengthUnit.FEET.GetConversionFactor();
+            Assert.Equal(factor1, factor2);
+            //Enum constants remain the same across invocations
+            Assert.Equal(LengthUnit.FEET, LengthUnit.FEET);
+            Assert.Equal(LengthUnit.INCH, LengthUnit.INCH);
+        }
     }
 }

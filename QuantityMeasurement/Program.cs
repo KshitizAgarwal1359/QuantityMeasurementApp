@@ -4,7 +4,7 @@ namespace QuantityMeasurement
 {
     public class Program
     {
-        // Define a static method to demonstrate Feet equality check
+        //demonstrates Feet equality check (UC1)
         public static void DemonstrateFeetEquality()
         {
             Console.WriteLine("--- Feet Equality Check (UC1) ---");
@@ -17,7 +17,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: Equal ({isEqualSameValue})");
             Console.WriteLine();
         }
-        // Define a static method to demonstrate Inches equality check
+        //demonstrates Inches equality check (UC2)
         public static void DemonstrateInchesEquality()
         {
             Console.WriteLine("--- Inches Equality Check (UC2) ---");
@@ -30,7 +30,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: Equal ({isEqualSameValue})");
             Console.WriteLine();
         }
-        // Demonstrates the equality check feature by comparing two QuantityLength objects
+        //demonstrates equality check between two QuantityLength objects
         public static void DemonstrateLengthEquality(QuantityLength firstLength, QuantityLength secondLength)
         {
             bool isEqual = firstLength.Equals(secondLength);
@@ -38,14 +38,14 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: Equal ({isEqual})");
             Console.WriteLine();
         }
-        // Demonstrates the comparison feature by creating two QuantityLength objects
+        //demonstrates comparison by creating QuantityLength objects from raw values
         public static void DemonstrateLengthComparison(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit)
         {
             QuantityLength firstLength = new QuantityLength(firstValue, firstUnit);
             QuantityLength secondLength = new QuantityLength(secondValue, secondUnit);
             DemonstrateLengthEquality(firstLength, secondLength);
         }
-        // Method Overloading: DemonstrateLengthConversion with raw values
+        //method Overloading: DemonstrateLengthConversion with raw values (UC5)
         public static void DemonstrateLengthConversion(double value, LengthUnit fromUnit, LengthUnit toUnit)
         {
             double convertedValue = QuantityLength.Convert(value, fromUnit, toUnit);
@@ -53,7 +53,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {convertedValue}");
             Console.WriteLine();
         }
-        // Method Overloading: DemonstrateLengthConversion with existing QuantityLength object
+        //method Overloading: DemonstrateLengthConversion with QuantityLength object (UC5)
         public static void DemonstrateLengthConversion(QuantityLength quantity, LengthUnit targetUnit)
         {
             QuantityLength convertedQuantity = quantity.ConvertTo(targetUnit);
@@ -61,7 +61,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {convertedQuantity}");
             Console.WriteLine();
         }
-        //demonstrates the UC6 addition feature (result in first operand's unit)
+        //demonstrates addition with result in first operand's unit (UC6)
         public static void DemonstrateLengthAddition(QuantityLength first, QuantityLength second)
         {
             QuantityLength result = first.Add(second);
@@ -69,14 +69,14 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {result}");
             Console.WriteLine();
         }
-        // Method Overloading: DemonstrateLengthAddition with raw values
+        //method Overloading: DemonstrateLengthAddition with raw values (UC6)
         public static void DemonstrateLengthAddition(double value1, LengthUnit unit1, double value2, LengthUnit unit2)
         {
             QuantityLength first = new QuantityLength(value1, unit1);
             QuantityLength second = new QuantityLength(value2, unit2);
             DemonstrateLengthAddition(first, second);
         }
-        //uc7: demonstrates addition with explicit target unit specification
+        //method Overloading: DemonstrateLengthAddition with explicit target unit (UC7)
         public static void DemonstrateLengthAddition(double value1, LengthUnit unit1, double value2, LengthUnit unit2, LengthUnit targetUnit)
         {
             QuantityLength first = new QuantityLength(value1, unit1);
@@ -86,7 +86,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {result}");
             Console.WriteLine();
         }
-        //uc7: demonstrates addition with explicit target unit using QuantityLength objects
+        //method Overloading: DemonstrateLengthAddition with QuantityLength objects and target unit (UC7)
         public static void DemonstrateLengthAddition(QuantityLength first, QuantityLength second, LengthUnit targetUnit)
         {
             QuantityLength result = first.Add(second, targetUnit);
@@ -94,48 +94,59 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {result}");
             Console.WriteLine();
         }
-        // Main method to demonstrate all features
+        //main method demonstrates all features including UC8 refactored design
         public static void Main(string[] args)
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC7: Addition with Target Unit");
+            Console.WriteLine("   UC8: Refactored Unit Enum Design");
             Console.WriteLine("========================================");
             Console.WriteLine();
-            // UC1 & UC2
+            // UC1 & UC2: Feet and Inches equality
             DemonstrateFeetEquality();
             DemonstrateInchesEquality();
             // UC3/UC4: Cross-unit equality
             Console.WriteLine("--- Cross-Unit Equality (UC3/UC4) ---");
             Console.WriteLine();
             DemonstrateLengthComparison(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
-            // UC5: Conversion
+            DemonstrateLengthComparison(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS);
+            // UC5: Conversion using refactored design
             Console.WriteLine("--- Unit Conversion (UC5) ---");
             Console.WriteLine();
             DemonstrateLengthConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);
-            // UC6: Addition (result in first operand's unit)
+            DemonstrateLengthConversion(2.54, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            // UC6: Addition
             Console.WriteLine("--- Length Addition (UC6) ---");
             Console.WriteLine();
             DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
-            // UC7: Addition with explicit target unit
+            // UC7: Addition with target unit
             Console.WriteLine("--- Addition with Target Unit (UC7) ---");
             Console.WriteLine();
-            // Result in FEET
-            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.FEET);
-            // Result in INCHES
-            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.INCH);
-            // Result in YARDS (different from both operands)
-            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.YARDS);
-            // Yards + Feet -> YARDS
             DemonstrateLengthAddition(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET, LengthUnit.YARDS);
-            // 36 Inches + 1 Yard -> FEET
-            DemonstrateLengthAddition(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS, LengthUnit.FEET);
-            // CM + Inches -> CENTIMETERS
-            DemonstrateLengthAddition(2.54, LengthUnit.CENTIMETERS, 1.0, LengthUnit.INCH, LengthUnit.CENTIMETERS);
-            // Zero with target unit: 5 feet + 0 inches -> YARDS
-            DemonstrateLengthAddition(5.0, LengthUnit.FEET, 0.0, LengthUnit.INCH, LengthUnit.YARDS);
-            // Negative with target unit: 5 feet + (-2 feet) -> INCHES
-            DemonstrateLengthAddition(5.0, LengthUnit.FEET, -2.0, LengthUnit.FEET, LengthUnit.INCH);
+            DemonstrateLengthAddition(5.0, LengthUnit.FEET, 0.0, LengthUnit.INCH, LengthUnit.FEET);
+            //uc8: LengthUnit standalone conversion methods
+            Console.WriteLine("--- LengthUnit Standalone Conversion (UC8) ---");
+            Console.WriteLine();
+            //convertToBaseUnit: Delegates conversion responsibility to the unit
+            double feetBaseValue = LengthUnit.FEET.ConvertToBaseUnit(12.0);
+            Console.WriteLine($"LengthUnit.FEET.ConvertToBaseUnit(12.0) = {feetBaseValue}");
+            Console.WriteLine();
+            double inchBaseValue = LengthUnit.INCH.ConvertToBaseUnit(12.0);
+            Console.WriteLine($"LengthUnit.INCH.ConvertToBaseUnit(12.0) = {inchBaseValue}");
+            Console.WriteLine();
+            double yardBaseValue = LengthUnit.YARDS.ConvertToBaseUnit(1.0);
+            Console.WriteLine($"LengthUnit.YARDS.ConvertToBaseUnit(1.0) = {yardBaseValue}");
+            Console.WriteLine();
+            //convertFromBaseUnit: Converts from base unit (feet) to target unit
+            double inchFromBase = LengthUnit.INCH.ConvertFromBaseUnit(1.0);
+            Console.WriteLine($"LengthUnit.INCH.ConvertFromBaseUnit(1.0) = {inchFromBase}");
+            Console.WriteLine();
+            double yardFromBase = LengthUnit.YARDS.ConvertFromBaseUnit(3.0);
+            Console.WriteLine($"LengthUnit.YARDS.ConvertFromBaseUnit(3.0) = {yardFromBase}");
+            Console.WriteLine();
+            double feetFromBase = LengthUnit.FEET.ConvertFromBaseUnit(2.0);
+            Console.WriteLine($"LengthUnit.FEET.ConvertFromBaseUnit(2.0) = {feetFromBase}");
+            Console.WriteLine();
             Console.WriteLine("========================================");
             Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");
