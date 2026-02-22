@@ -994,5 +994,262 @@ namespace QuantityMeasurement.Tests
             Assert.Equal(LengthUnit.FEET, LengthUnit.FEET);
             Assert.Equal(LengthUnit.INCH, LengthUnit.INCH);
         }
+
+        // ==================== Weight Measurement Tests (UC9) ====================
+
+        // Kilogram-to-Kilogram equality: same value
+        [Fact]
+        public void TestEquality_KilogramToKilogram_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(first.Equals(second));
+        }
+        // Kilogram-to-Kilogram equality: different value
+        [Fact]
+        public void TestEquality_KilogramToKilogram_DifferentValue()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.KILOGRAM);
+            Assert.False(first.Equals(second));
+        }
+        // Gram-to-Gram equality: same value
+        [Fact]
+        public void TestEquality_GramToGram_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(500.0, WeightUnit.GRAM);
+            QuantityWeight second = new QuantityWeight(500.0, WeightUnit.GRAM);
+            Assert.True(first.Equals(second));
+        }
+        // Pound-to-Pound equality: same value
+        [Fact]
+        public void TestEquality_PoundToPound_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(2.0, WeightUnit.POUND);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.POUND);
+            Assert.True(first.Equals(second));
+        }
+        // Cross-unit equality: 1 kg = 1000 g
+        [Fact]
+        public void TestEquality_KilogramToGram_EquivalentValue()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight thousandGrams = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            Assert.True(oneKg.Equals(thousandGrams));
+        }
+        // Cross-unit equality: 1000 g = 1 kg (symmetric)
+        [Fact]
+        public void TestEquality_GramToKilogram_EquivalentValue()
+        {
+            QuantityWeight thousandGrams = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(thousandGrams.Equals(oneKg));
+        }
+        // Weight vs Length: incompatible categories should return false
+        [Fact]
+        public void TestEquality_WeightVsLength_Incompatible()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            Assert.False(oneKg.Equals(oneFoot));
+        }
+        // Null comparison returns false
+        [Fact]
+        public void TestEquality_Weight_NullComparison()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.False(oneKg.Equals(null));
+        }
+        // Same reference returns true (reflexive)
+        [Fact]
+        public void TestEquality_Weight_SameReference()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(oneKg.Equals(oneKg));
+        }
+        // Transitive property: A=B and B=C implies A=C
+        [Fact]
+        public void TestEquality_Weight_TransitiveProperty()
+        {
+            QuantityWeight a = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight b = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight c = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(a.Equals(b));
+            Assert.True(b.Equals(c));
+            Assert.True(a.Equals(c));
+        }
+        // Zero values are equal across units
+        [Fact]
+        public void TestEquality_Weight_ZeroValue()
+        {
+            QuantityWeight zeroKg = new QuantityWeight(0.0, WeightUnit.KILOGRAM);
+            QuantityWeight zeroGram = new QuantityWeight(0.0, WeightUnit.GRAM);
+            QuantityWeight zeroPound = new QuantityWeight(0.0, WeightUnit.POUND);
+            Assert.True(zeroKg.Equals(zeroGram));
+            Assert.True(zeroKg.Equals(zeroPound));
+        }
+        // Negative weight equality
+        [Fact]
+        public void TestEquality_Weight_NegativeValue()
+        {
+            QuantityWeight negKg = new QuantityWeight(-1.0, WeightUnit.KILOGRAM);
+            QuantityWeight negGram = new QuantityWeight(-1000.0, WeightUnit.GRAM);
+            Assert.True(negKg.Equals(negGram));
+        }
+        // Large weight value equality
+        [Fact]
+        public void TestEquality_Weight_LargeValue()
+        {
+            QuantityWeight largeGram = new QuantityWeight(1000000.0, WeightUnit.GRAM);
+            QuantityWeight largeKg = new QuantityWeight(1000.0, WeightUnit.KILOGRAM);
+            Assert.True(largeGram.Equals(largeKg));
+        }
+        // Small weight value equality
+        [Fact]
+        public void TestEquality_Weight_SmallValue()
+        {
+            QuantityWeight smallKg = new QuantityWeight(0.001, WeightUnit.KILOGRAM);
+            QuantityWeight oneGram = new QuantityWeight(1.0, WeightUnit.GRAM);
+            Assert.True(smallKg.Equals(oneGram));
+        }
+        // Conversion: Pound to Kilogram
+        [Fact]
+        public void TestConversion_PoundToKilogram()
+        {
+            QuantityWeight onePound = new QuantityWeight(1.0, WeightUnit.POUND);
+            QuantityWeight converted = onePound.ConvertTo(WeightUnit.KILOGRAM);
+            Assert.Equal(0.453592, converted.MeasurementValue, 4);
+            Assert.Equal(WeightUnit.KILOGRAM, converted.Unit);
+        }
+        // Conversion: Kilogram to Pound
+        [Fact]
+        public void TestConversion_KilogramToPound()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = oneKg.ConvertTo(WeightUnit.POUND);
+            Assert.Equal(2.20462, converted.MeasurementValue, 3);
+            Assert.Equal(WeightUnit.POUND, converted.Unit);
+        }
+        // Conversion: Kilogram to Gram
+        [Fact]
+        public void TestConversion_KilogramToGram()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = oneKg.ConvertTo(WeightUnit.GRAM);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, converted.Unit);
+        }
+        // Conversion: Same unit returns unchanged
+        [Fact]
+        public void TestConversion_Weight_SameUnit()
+        {
+            QuantityWeight fiveKg = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = fiveKg.ConvertTo(WeightUnit.KILOGRAM);
+            Assert.Equal(5.0, converted.MeasurementValue, 6);
+        }
+        // Conversion: Zero value
+        [Fact]
+        public void TestConversion_Weight_ZeroValue()
+        {
+            double result = QuantityWeight.Convert(0.0, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            Assert.Equal(0.0, result, 6);
+        }
+        // Conversion: Negative value preserves sign
+        [Fact]
+        public void TestConversion_Weight_NegativeValue()
+        {
+            double result = QuantityWeight.Convert(-1.0, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            Assert.Equal(-1000.0, result, 6);
+        }
+        // Conversion: Round-trip preserves value
+        [Fact]
+        public void TestConversion_Weight_RoundTrip()
+        {
+            double originalValue = 1.5;
+            double toGram = QuantityWeight.Convert(originalValue, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            double backToKg = QuantityWeight.Convert(toGram, WeightUnit.GRAM, WeightUnit.KILOGRAM);
+            Assert.Equal(originalValue, backToKg, 4);
+        }
+        // Addition: Same unit (kg + kg)
+        [Fact]
+        public void TestAddition_Weight_SameUnit_KilogramPlusKilogram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Cross-unit (kg + g)
+        [Fact]
+        public void TestAddition_Weight_CrossUnit_KilogramPlusGram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Cross-unit (g + kg) result in grams
+        [Fact]
+        public void TestAddition_Weight_CrossUnit_GramPlusKilogram()
+        {
+            QuantityWeight first = new QuantityWeight(500.0, WeightUnit.GRAM);
+            QuantityWeight second = new QuantityWeight(0.5, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(1000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Addition: Explicit target unit (kg + g -> GRAM)
+        [Fact]
+        public void TestAddition_Weight_ExplicitTargetUnit_Gram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Addition: Commutativity
+        [Fact]
+        public void TestAddition_Weight_Commutativity()
+        {
+            QuantityWeight kg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight gram = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight resultKgFirst = kg.Add(gram);
+            QuantityWeight resultGramFirst = gram.Add(kg);
+            // Both should represent the same physical weight
+            Assert.True(resultKgFirst.Equals(resultGramFirst));
+        }
+        // Addition: With zero (identity element)
+        [Fact]
+        public void TestAddition_Weight_WithZero()
+        {
+            QuantityWeight first = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight zero = new QuantityWeight(0.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Negative values
+        [Fact]
+        public void TestAddition_Weight_NegativeValues()
+        {
+            QuantityWeight first = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(-2000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Large values
+        [Fact]
+        public void TestAddition_Weight_LargeValues()
+        {
+            QuantityWeight first = new QuantityWeight(1e6, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1e6, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
     }
 }

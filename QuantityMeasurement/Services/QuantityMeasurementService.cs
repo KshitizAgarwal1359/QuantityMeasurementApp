@@ -51,5 +51,30 @@ namespace QuantityMeasurement.Services
         {
             return QuantityLength.Add(first, second, targetUnit);
         }
+        //compares two QuantityWeight measurement objects for equality (UC9)
+        public bool CompareWeightMeasurements(QuantityWeight? firstMeasurement, QuantityWeight? secondMeasurement)
+        {
+            if (firstMeasurement is null)
+            {
+                return false;
+            }
+            return firstMeasurement.Equals(secondMeasurement);
+        }
+        //converts a weight value from one unit to another (UC9)
+        public double ConvertWeightUnits(double value, WeightUnit sourceUnit, WeightUnit targetUnit)
+        {
+            return QuantityWeight.Convert(value, sourceUnit, targetUnit);
+        }
+        //adds two QuantityWeight measurements (UC9)
+        //result is expressed in the unit of the first operand
+        public QuantityWeight AddWeightMeasurements(QuantityWeight first, QuantityWeight second)
+        {
+            return QuantityWeight.Add(first, second);
+        }
+        //adds two QuantityWeight measurements with explicit target unit (UC9)
+        public QuantityWeight AddWeightMeasurements(QuantityWeight first, QuantityWeight second, WeightUnit targetUnit)
+        {
+            return QuantityWeight.Add(first, second, targetUnit);
+        }
     }
 }
