@@ -39,5 +39,11 @@ namespace QuantityMeasurement.Services
         {
             return QuantityLength.Convert(value, sourceUnit, targetUnit);
         }
+        //adds two QuantityLength measurements (UC6)
+        //result is expressed in the unit of the first operand
+        public QuantityLength AddLengthMeasurements(QuantityLength first, QuantityLength second)
+        {
+            return QuantityLength.Add(first, second);
+        }
     }
 }

@@ -530,5 +530,167 @@ namespace QuantityMeasurement.Tests
             double result = QuantityLength.Convert(3.0, LengthUnit.YARDS, LengthUnit.FEET);
             Assert.Equal(9.0, result, 6);
         }
+        //Length Addition Tests (UC6)
+        // Add(Quantity(1.0, FEET), Quantity(2.0, FEET)) should return Quantity(3.0, FEET)
+        [Fact]
+        public void TestAddition_SameUnit_FeetPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Add(Quantity(6.0, INCHES), Quantity(6.0, INCHES)) should return Quantity(12.0, INCHES)
+        [Fact]
+        public void TestAddition_SameUnit_InchPlusInch()
+        {
+            QuantityLength first = new QuantityLength(6.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(6.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(12.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Add(Quantity(1.0, FEET), Quantity(12.0, INCHES)) should return Quantity(2.0, FEET)
+        [Fact]
+        public void TestAddition_CrossUnit_FeetPlusInches()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Add(Quantity(12.0, INCHES), Quantity(1.0, FEET)) should return Quantity(24.0, INCHES)
+        [Fact]
+        public void TestAddition_CrossUnit_InchPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(24.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Add(Quantity(1.0, YARDS), Quantity(3.0, FEET)) should return Quantity(2.0, YARDS)
+        [Fact]
+        public void TestAddition_CrossUnit_YardPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // Add(Quantity(2.54, CENTIMETERS), Quantity(1.0, INCHES)) should return ~5.08 CENTIMETERS
+        [Fact]
+        public void TestAddition_CrossUnit_CentimeterPlusInch()
+        {
+            QuantityLength first = new QuantityLength(2.54, LengthUnit.CENTIMETERS);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(5.08, result.MeasurementValue, 2);
+            Assert.Equal(LengthUnit.CENTIMETERS, result.Unit);
+        }
+        // Commutativity: adding in different order should yield same base value
+        [Fact]
+        public void TestAddition_Commutativity()
+        {
+            QuantityLength feet = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength inches = new QuantityLength(12.0, LengthUnit.INCH);
+            // 1 foot + 12 inches = 2 feet
+            QuantityLength resultFeetFirst = feet.Add(inches);
+            // 12 inches + 1 foot = 24 inches
+            QuantityLength resultInchesFirst = inches.Add(feet);
+            // Both should represent the same physical length (2 feet = 24 inches)
+            Assert.True(resultFeetFirst.Equals(resultInchesFirst));
+        }
+        // Adding zero acts as identity element: 5 feet + 0 inches = 5 feet
+        [Fact]
+        public void TestAddition_WithZero()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength zero = new QuantityLength(0.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Negative values: 5 feet + (-2 feet) = 3 feet
+        [Fact]
+        public void TestAddition_NegativeValues()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(-2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Null second operand should throw ArgumentException
+        [Fact]
+        public void TestAddition_NullSecondOperand()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Add(null!));
+        }
+        // Large values: 1e6 feet + 1e6 feet = 2e6 feet
+        [Fact]
+        public void TestAddition_LargeValues()
+        {
+            QuantityLength first = new QuantityLength(1e6, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(1e6, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Small values: 0.001 feet + 0.002 feet = ~0.003 feet
+        [Fact]
+        public void TestAddition_SmallValues()
+        {
+            QuantityLength first = new QuantityLength(0.001, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(0.002, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(0.003, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Immutability: original objects remain unchanged after addition
+        [Fact]
+        public void TestAddition_Immutability()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            // Original objects should remain unchanged
+            Assert.Equal(1.0, first.MeasurementValue, 6);
+            Assert.Equal(2.0, second.MeasurementValue, 6);
+            // Result should be a new object with the sum
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+        }
+        // Static Add method with QuantityLength objects
+        [Fact]
+        public void TestAddition_StaticMethod_QuantityLengthObjects()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = QuantityLength.Add(first, second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Static Add method with raw values and units
+        [Fact]
+        public void TestAddition_StaticMethod_RawValues()
+        {
+            QuantityLength result = QuantityLength.Add(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS);
+            Assert.Equal(72.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Inches + Yard: 36 inches + 1 yard = 72 inches
+        [Fact]
+        public void TestAddition_CrossUnit_InchPlusYard()
+        {
+            QuantityLength first = new QuantityLength(36.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(72.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
     }
 }
