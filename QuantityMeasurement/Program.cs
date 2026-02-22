@@ -17,7 +17,6 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: Equal ({isEqualSameValue})");
             Console.WriteLine();
         }
-
         // Define a static method to demonstrate Inches equality check
         public static void DemonstrateInchesEquality()
         {
@@ -31,83 +30,74 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: Equal ({isEqualSameValue})");
             Console.WriteLine();
         }
-
-        // Define a static method to demonstrate QuantityLength cross-unit equality check
-        public static void DemonstrateQuantityLengthEquality()
+        // Demonstrates the equality check feature by comparing two QuantityLength objects
+        // API-like static method for showcasing comparison functionality
+        public static void DemonstrateLengthEquality(QuantityLength firstLength, QuantityLength secondLength)
         {
-            Console.WriteLine("--- QuantityLength Cross-Unit Equality Check (UC3) ---");
-            Console.WriteLine();
-            QuantityMeasurementService quantityMeasurementService = new QuantityMeasurementService();
-            // Cross-unit comparison: 1 Foot should equal 12 Inches
-            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
-            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
-            bool isCrossUnitEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(oneFoot, twelveInches);
-            Console.WriteLine($"Comparing {oneFoot} and {twelveInches}");
-            Console.WriteLine($"Result: Equal ({isCrossUnitEqual})");
-            Console.WriteLine();
-            // Same unit comparison: 1 Inch should equal 1 Inch
-            QuantityLength firstInch = new QuantityLength(1.0, LengthUnit.INCH);
-            QuantityLength secondInch = new QuantityLength(1.0, LengthUnit.INCH);
-            bool isSameUnitEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(firstInch, secondInch);
-            Console.WriteLine($"Comparing {firstInch} and {secondInch}");
-            Console.WriteLine($"Result: Equal ({isSameUnitEqual})");
+            bool isEqual = firstLength.Equals(secondLength);
+            Console.WriteLine($"Comparing {firstLength} and {secondLength}");
+            Console.WriteLine($"Result: Equal ({isEqual})");
             Console.WriteLine();
         }
-        // Define a static method to demonstrate Yards and Centimeters equality check
-        public static void DemonstrateExtendedUnitEquality()
+        // Demonstrates the comparison feature by creating two QuantityLength objects
+        // and checking their equality using DemonstrateLengthEquality
+        public static void DemonstrateLengthComparison(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit)
         {
-            Console.WriteLine("--- Extended Unit Equality Check (UC4) ---");
-            Console.WriteLine();
-            QuantityMeasurementService quantityMeasurementService = new QuantityMeasurementService();
-            // Yard to Feet: 1 Yard should equal 3 Feet
-            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
-            QuantityLength threeFeet = new QuantityLength(3.0, LengthUnit.FEET);
-            bool isYardToFeetEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(oneYard, threeFeet);
-            Console.WriteLine($"Comparing {oneYard} and {threeFeet}");
-            Console.WriteLine($"Result: Equal ({isYardToFeetEqual})");
-            Console.WriteLine();
-            // Yard to Inches: 1 Yard should equal 36 Inches
-            QuantityLength thirtySixInches = new QuantityLength(36.0, LengthUnit.INCH);
-            bool isYardToInchesEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(oneYard, thirtySixInches);
-            Console.WriteLine($"Comparing {oneYard} and {thirtySixInches}");
-            Console.WriteLine($"Result: Equal ({isYardToInchesEqual})");
-            Console.WriteLine();
-            // Yard to Yard: 2 Yards should equal 2 Yards
-            QuantityLength firstTwoYards = new QuantityLength(2.0, LengthUnit.YARDS);
-            QuantityLength secondTwoYards = new QuantityLength(2.0, LengthUnit.YARDS);
-            bool isYardToYardEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(firstTwoYards, secondTwoYards);
-            Console.WriteLine($"Comparing {firstTwoYards} and {secondTwoYards}");
-            Console.WriteLine($"Result: Equal ({isYardToYardEqual})");
-            Console.WriteLine();
-            // CM to CM: 2 CM should equal 2 CM
-            QuantityLength firstTwoCm = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
-            QuantityLength secondTwoCm = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
-            bool isCmToCmEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(firstTwoCm, secondTwoCm);
-            Console.WriteLine($"Comparing {firstTwoCm} and {secondTwoCm}");
-            Console.WriteLine($"Result: Equal ({isCmToCmEqual})");
-            Console.WriteLine();
-            // CM to Inches: 1 CM should equal 0.393701 Inches
-            QuantityLength oneCm = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
-            QuantityLength equivalentInches = new QuantityLength(0.393701, LengthUnit.INCH);
-            bool isCmToInchEqual = quantityMeasurementService.CompareQuantityLengthMeasurements(oneCm, equivalentInches);
-            Console.WriteLine($"Comparing {oneCm} and {equivalentInches}");
-            Console.WriteLine($"Result: Equal ({isCmToInchEqual})");
+            QuantityLength firstLength = new QuantityLength(firstValue, firstUnit);
+            QuantityLength secondLength = new QuantityLength(secondValue, secondUnit);
+            DemonstrateLengthEquality(firstLength, secondLength);
+        }
+        // Method Overloading: DemonstrateLengthConversion with raw values (value, fromUnit, toUnit)
+        // Used when you have raw values to convert
+        public static void DemonstrateLengthConversion(double value, LengthUnit fromUnit, LengthUnit toUnit)
+        {
+            double convertedValue = QuantityLength.Convert(value, fromUnit, toUnit);
+            Console.WriteLine($"Converting {value} {fromUnit} to {toUnit}");
+            Console.WriteLine($"Result: {convertedValue}");
             Console.WriteLine();
         }
-        // Main method to demonstrate all equality checks
+        // Method Overloading: DemonstrateLengthConversion with existing QuantityLength object
+        // Used when you already have a QuantityLength instance
+        public static void DemonstrateLengthConversion(QuantityLength quantity, LengthUnit targetUnit)
+        {
+            QuantityLength convertedQuantity = quantity.ConvertTo(targetUnit);
+            Console.WriteLine($"Converting {quantity} to {targetUnit}");
+            Console.WriteLine($"Result: {convertedQuantity}");
+            Console.WriteLine();
+        }
+        // Main method to demonstrate all features
         public static void Main(string[] args)
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC4: Extended Unit Support");
+            Console.WriteLine("   UC5: Unit-to-Unit Conversion");
             Console.WriteLine("========================================");
             Console.WriteLine();
+            // UC1: Feet equality
             DemonstrateFeetEquality();
+            // UC2: Inches equality
             DemonstrateInchesEquality();
-            DemonstrateQuantityLengthEquality();
-            DemonstrateExtendedUnitEquality();
+            // UC3/UC4: Cross-unit equality using DemonstrateLengthComparison
+            Console.WriteLine("--- Cross-Unit Equality (UC3/UC4) ---");
+            Console.WriteLine();
+            DemonstrateLengthComparison(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
+            DemonstrateLengthComparison(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET);
+            // UC5: Unit-to-Unit Conversion demos
+            Console.WriteLine("--- Unit-to-Unit Conversion (UC5) ---");
+            Console.WriteLine();
+            // Method 1: DemonstrateLengthConversion with raw values
+            DemonstrateLengthConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);
+            DemonstrateLengthConversion(3.0, LengthUnit.YARDS, LengthUnit.FEET);
+            DemonstrateLengthConversion(36.0, LengthUnit.INCH, LengthUnit.YARDS);
+            DemonstrateLengthConversion(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            DemonstrateLengthConversion(0.0, LengthUnit.FEET, LengthUnit.INCH);
+
+            // Method 2: DemonstrateLengthConversion with existing QuantityLength object
+            QuantityLength lengthInYards = new QuantityLength(2.0, LengthUnit.YARDS);
+            DemonstrateLengthConversion(lengthInYards, LengthUnit.INCH);
+            DemonstrateLengthConversion(lengthInYards, LengthUnit.FEET);
             Console.WriteLine("========================================");
-            Console.WriteLine("   Equality Comparison Complete");
+            Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");
         }
     }

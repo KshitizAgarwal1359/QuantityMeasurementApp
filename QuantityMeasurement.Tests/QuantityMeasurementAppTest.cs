@@ -359,5 +359,176 @@ namespace QuantityMeasurement.Tests
             Assert.True(zeroFeet.Equals(zeroCm));
             Assert.True(zeroYards.Equals(zeroCm));
         }
+        // ==================== Unit Conversion Tests (UC5) ====================
+        // convert(1.0, FEET, INCHES) should return 12.0
+        [Fact]
+        public void TestConversion_FeetToInches()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(12.0, result, 6);
+        }
+        // convert(24.0, INCHES, FEET) should return 2.0
+        [Fact]
+        public void TestConversion_InchesToFeet()
+        {
+            double result = QuantityLength.Convert(24.0, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(2.0, result, 6);
+        }
+        // convert(1.0, YARDS, INCHES) should return 36.0
+        [Fact]
+        public void TestConversion_YardsToInches()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.YARDS, LengthUnit.INCH);
+            Assert.Equal(36.0, result, 6);
+        }
+        // convert(72.0, INCHES, YARDS) should return 2.0
+        [Fact]
+        public void TestConversion_InchesToYards()
+        {
+            double result = QuantityLength.Convert(72.0, LengthUnit.INCH, LengthUnit.YARDS);
+            Assert.Equal(2.0, result, 6);
+        }
+        // convert(2.54, CENTIMETERS, INCHES) should return ~1.0 (within epsilon)
+        [Fact]
+        public void TestConversion_CentimetersToInches()
+        {
+            double result = QuantityLength.Convert(2.54, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            Assert.Equal(1.0, result, 4);
+        }
+        // convert(6.0, FEET, YARDS) should return 2.0
+        [Fact]
+        public void TestConversion_FeetToYards()
+        {
+            double result = QuantityLength.Convert(6.0, LengthUnit.FEET, LengthUnit.YARDS);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Round-trip: convert(convert(v, A, B), B, A) should approximately equal v
+        [Fact]
+        public void TestConversion_RoundTrip_PreservesValue()
+        {
+            double originalValue = 5.5;
+            // Feet -> Inches -> Feet
+            double convertedToInches = QuantityLength.Convert(originalValue, LengthUnit.FEET, LengthUnit.INCH);
+            double convertedBack = QuantityLength.Convert(convertedToInches, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(originalValue, convertedBack, 6);
+        }
+        // convert(0.0, FEET, INCHES) should return 0.0
+        [Fact]
+        public void TestConversion_ZeroValue()
+        {
+            double result = QuantityLength.Convert(0.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(0.0, result, 6);
+        }
+        // convert(-1.0, FEET, INCHES) should return -12.0
+        [Fact]
+        public void TestConversion_NegativeValue()
+        {
+            double result = QuantityLength.Convert(-1.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(-12.0, result, 6);
+        }
+        // Passing NaN should throw ArgumentException
+        [Fact]
+        public void TestConversion_NaN_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.NaN, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Passing PositiveInfinity should throw ArgumentException
+        [Fact]
+        public void TestConversion_PositiveInfinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.PositiveInfinity, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Passing NegativeInfinity should throw ArgumentException
+        [Fact]
+        public void TestConversion_NegativeInfinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.NegativeInfinity, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Conversion results are within acceptable floating-point epsilon tolerance
+        [Fact]
+        public void TestConversion_PrecisionTolerance()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            double expected = 0.393701;
+            Assert.True(Math.Abs(result - expected) < 1e-6, $"Expected {expected} but got {result}");
+        }
+        // Converting a unit to itself returns the original value unchanged
+        [Fact]
+        public void TestConversion_SameUnit()
+        {
+            double result = QuantityLength.Convert(5.0, LengthUnit.FEET, LengthUnit.FEET);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Large value conversion maintains precision
+        [Fact]
+        public void TestConversion_LargeValue()
+        {
+            double result = QuantityLength.Convert(1000000.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(12000000.0, result, 6);
+        }
+        // Small value conversion maintains precision
+        [Fact]
+        public void TestConversion_SmallValue()
+        {
+            double result = QuantityLength.Convert(0.001, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(0.012, result, 6);
+        }
+        // Instance method ConvertTo returns a new QuantityLength with converted value
+        [Fact]
+        public void TestConversion_InstanceMethod_ConvertTo()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // ConvertTo returns a NEW instance (immutability check)
+        [Fact]
+        public void TestConversion_ConvertTo_ReturnsNewInstance()
+        {
+            QuantityLength original = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = original.ConvertTo(LengthUnit.INCH);
+            // Original should remain unchanged
+            Assert.Equal(1.0, original.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, original.Unit);
+            // Converted should be different instance with new values
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // Multi-step round-trip: convert(convert(convert(v, A, B), B, C), C, A) ≈ v
+        [Fact]
+        public void TestConversion_MultiStepRoundTrip()
+        {
+            double originalValue = 3.0;
+            // Feet -> Yards -> Inches -> Feet
+            double toYards = QuantityLength.Convert(originalValue, LengthUnit.FEET, LengthUnit.YARDS);
+            double toInches = QuantityLength.Convert(toYards, LengthUnit.YARDS, LengthUnit.INCH);
+            double backToFeet = QuantityLength.Convert(toInches, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(originalValue, backToFeet, 4);
+        }
+        // Constructor should throw ArgumentException for NaN
+        [Fact]
+        public void TestConstructor_NaN_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new QuantityLength(double.NaN, LengthUnit.FEET));
+        }
+        // Constructor should throw ArgumentException for Infinity
+        [Fact]
+        public void TestConstructor_Infinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new QuantityLength(double.PositiveInfinity, LengthUnit.FEET));
+        }
+        // Yards to Feet conversion
+        [Fact]
+        public void TestConversion_YardsToFeet()
+        {
+            double result = QuantityLength.Convert(3.0, LengthUnit.YARDS, LengthUnit.FEET);
+            Assert.Equal(9.0, result, 6);
+        }
     }
 }
