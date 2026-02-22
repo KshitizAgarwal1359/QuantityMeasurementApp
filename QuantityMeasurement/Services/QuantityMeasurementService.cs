@@ -24,7 +24,6 @@ namespace QuantityMeasurement.Services
             }
             return firstMeasurement.Equals(secondMeasurement);
         }
-
         // Compares two QuantityLength measurement objects for equality (UC3)
         // Supports cross-unit comparison by converting to a common base unit
         public bool CompareQuantityLengthMeasurements(QuantityLength? firstMeasurement, QuantityLength? secondMeasurement)

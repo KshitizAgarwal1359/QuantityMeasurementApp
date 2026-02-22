@@ -58,7 +58,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstFeetValue.Equals(secondFeetValue);
             Assert.True(isEqual);
         }
-
         // ==================== Inches Equality Tests (UC2) ====================
         [Fact]
         public void TestInchesEquality_SameValue()
@@ -98,9 +97,7 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstInchesValue.Equals(firstInchesValue);
             Assert.True(isEqual);
         }
-
         // ==================== QuantityLength Tests (UC3 - DRY Principle) ====================
-
         // Verifies that Quantity(1.0, "feet") equals Quantity(1.0, "feet")
         [Fact]
         public void TestEquality_FeetToFeet_SameValue()
@@ -110,7 +107,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstQuantity.Equals(secondQuantity);
             Assert.True(isEqual);
         }
-
         // Verifies that Quantity(1.0, "inch") equals Quantity(1.0, "inch")
         [Fact]
         public void TestEquality_InchToInch_SameValue()
@@ -120,7 +116,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstQuantity.Equals(secondQuantity);
             Assert.True(isEqual);
         }
-
         // Verifies that Quantity(1.0, "feet") equals Quantity(12.0, "inch") - cross-unit equality
         [Fact]
         public void TestEquality_FeetToInch_EquivalentValue()
@@ -130,7 +125,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = feetQuantity.Equals(inchQuantity);
             Assert.True(isEqual);
         }
-
         // Verifies that Quantity(12.0, "inch") equals Quantity(1.0, "feet") - symmetry of conversion
         [Fact]
         public void TestEquality_InchToFeet_EquivalentValue()
@@ -140,7 +134,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = inchQuantity.Equals(feetQuantity);
             Assert.True(isEqual);
         }
-
         // Verifies that Quantity(1.0, "feet") does not equal Quantity(2.0, "feet")
         [Fact]
         public void TestEquality_FeetToFeet_DifferentValue()
@@ -150,7 +143,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstQuantity.Equals(secondQuantity);
             Assert.False(isEqual);
         }
-
         // Verifies that Quantity(1.0, "inch") does not equal Quantity(2.0, "inch")
         [Fact]
         public void TestEquality_InchToInch_DifferentValue()
@@ -160,7 +152,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = firstQuantity.Equals(secondQuantity);
             Assert.False(isEqual);
         }
-
         // Verifies that a QuantityLength object equals itself (reflexive property)
         [Fact]
         public void TestEquality_SameReference()
@@ -169,7 +160,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = quantity.Equals(quantity);
             Assert.True(isEqual);
         }
-
         // Verifies that a QuantityLength object is not equal to null
         [Fact]
         public void TestEquality_NullComparison()
@@ -178,7 +168,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = quantity.Equals(null);
             Assert.False(isEqual);
         }
-
         // Verifies that a QuantityLength compared with a different type returns false
         [Fact]
         public void TestEquality_DifferentClass()
@@ -188,7 +177,6 @@ namespace QuantityMeasurement.Tests
             bool isEqual = quantity.Equals(differentClassObject);
             Assert.False(isEqual);
         }
-
         // Verifies that zero feet equals zero inches (cross-unit zero value)
         [Fact]
         public void TestEquality_ZeroFeet_ZeroInches()

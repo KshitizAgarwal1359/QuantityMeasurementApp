@@ -1,8 +1,6 @@
 namespace QuantityMeasurement.Models
 {
     // LengthUnit enum encapsulates all possible measurement units
-    // Each unit has a conversion factor relative to the base unit (feet)
-    // Provides type-safe constants instead of magic strings/numbers
     public enum LengthUnit
     {
         // Base unit: 1 foot = 1 foot
@@ -10,7 +8,6 @@ namespace QuantityMeasurement.Models
         // 1 inch = 1/12 foot
         INCH
     }
-
     // Extension methods to get conversion factor for each LengthUnit
     public static class LengthUnitExtensions
     {
