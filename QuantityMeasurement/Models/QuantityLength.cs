@@ -47,7 +47,14 @@ namespace QuantityMeasurement.Models
         }
         public override string ToString()
         {
-            string unitLabel = this.lengthUnit == LengthUnit.FEET ? "feet" : "inch";
+            string unitLabel = this.lengthUnit switch
+            {
+                LengthUnit.FEET => "feet",
+                LengthUnit.INCH => "inch",
+                LengthUnit.YARDS => "yards",
+                LengthUnit.CENTIMETERS => "cm",
+                _ => "unknown"
+            };
             return $"{this.measurementValue} {unitLabel}";
         }
     }
