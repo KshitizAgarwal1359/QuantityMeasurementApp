@@ -1,8 +1,8 @@
 namespace QuantityMeasurement.Models
 {
-    //QuantityLength class represents a length measurement with a value and unit
-    // Supports equality comparison,unit-to-unit conversion,and addition of lengths
-    //Instances are immutable (value obj semantics) — all operations return new instances
+    //quantityLength class represents a length measurement with a value and unit
+    //supports equality comparison, unit-to-unit conversion, and addition of lengths
+    //instances are immutable (value object semantics) — all operations return new instances
     public class QuantityLength
     {
         private readonly double measurementValue;
@@ -22,6 +22,8 @@ namespace QuantityMeasurement.Models
         public double MeasurementValue => this.measurementValue;
         //gets the length unit type
         public LengthUnit Unit => this.lengthUnit;
+        //private helper method: converts the measurement value to the base unit(feet)
+        //centralizes conversion logic for equality, conversion, and addition
         private double ConvertToBaseUnit()
         {
             return this.measurementValue * this.lengthUnit.GetConversionFactor();
@@ -34,7 +36,7 @@ namespace QuantityMeasurement.Models
         }
         //instance method for unit conversion
         //converts this measurement to the specified target unit
-        //returns a NEW QuantityLength instance (preserving immutability / value object semantics)
+        //returns a NEW QuantityLength instance (preserving immutability)
         public QuantityLength ConvertTo(LengthUnit targetUnit)
         {
             double baseUnitValue = this.ConvertToBaseUnit();
@@ -53,27 +55,40 @@ namespace QuantityMeasurement.Models
             QuantityLength convertedQuantity = sourceQuantity.ConvertTo(targetUnit);
             return convertedQuantity.MeasurementValue;
         }
-        //instance method for addition — adds another QuantityLength to this instance
-        //returns a NEW QuantityLength with the sum expressed in THIS object's unit (first operand's unit)
-        //both values are normalized to the base unit, added, then converted back to this unit
-        public QuantityLength Add(QuantityLength other)
+        //private utility addition method — converts both lengths to base unit, sums them, and converts the result to the specified target unit
+        //used by both Add(other) and Add(other, targetUnit) to avoid DRY violation
+        //maintains immutability by returning a new QuantityLength instance
+        //applies consistent rounding to 6 decimal places across all operations
+        private QuantityLength AddAndConvertToTargetUnit(QuantityLength other, LengthUnit targetUnit)
         {
             if (other is null)
             {
                 throw new ArgumentException("Cannot add null measurement. The second operand must be a valid QuantityLength.");
             }
-            //convert both to base unit (feet), add, then convert back to this unit
+            // Convert both to base unit (feet), add them
             double thisBaseValue = this.ConvertToBaseUnit();
             double otherBaseValue = other.ConvertToBaseUnit();
             double sumInBaseUnit = thisBaseValue + otherBaseValue;
-            // Convert sum back to this object's unit
-            double resultValue = ConvertFromBaseUnit(sumInBaseUnit, this.lengthUnit);
+            // Convert sum to the specified target unit
+            double resultValue = ConvertFromBaseUnit(sumInBaseUnit, targetUnit);
             resultValue = Math.Round(resultValue, 6);
-            return new QuantityLength(resultValue, this.lengthUnit);
+            return new QuantityLength(resultValue, targetUnit);
+        }
+        //instance method for addition (UC6) — adds another QuantityLength to this instance
+        //returns a NEW QuantityLength with the sum expressed in THIS object's unit (first operand's unit)
+        public QuantityLength Add(QuantityLength other)
+        {
+            return AddAndConvertToTargetUnit(other, this.lengthUnit);
+        }
+        //instance method for addition with explicit target unit (UC7)
+        //returns a NEW QuantityLength with the sum expressed in the specified target unit
+        //provides flexibility — result unit is explicitly controlled by the caller
+        public QuantityLength Add(QuantityLength other, LengthUnit targetUnit)
+        {
+            return AddAndConvertToTargetUnit(other, targetUnit);
         }
         //static Add method (overloaded) — adds two QuantityLength objects
-        //result is expressed in the unit of the first operand
-        //acts as a factory method, creating a new QuantityLength instance
+        //result is expressed in the unit of the first operand (UC6)
         public static QuantityLength Add(QuantityLength first, QuantityLength second)
         {
             if (first is null)
@@ -82,9 +97,18 @@ namespace QuantityMeasurement.Models
             }
             return first.Add(second);
         }
-        //static Add method (overloaded) — adds two raw values with their units
+        //static Add method (overloaded) — adds two QuantityLength objects with explicit target unit (UC7)
+        //result is expressed in the specified target unit
+        public static QuantityLength Add(QuantityLength first, QuantityLength second, LengthUnit targetUnit)
+        {
+            if (first is null)
+            {
+                throw new ArgumentException("First operand cannot be null.");
+            }
+            return first.Add(second, targetUnit);
+        }
+        //static Add method (overloaded) — adds two raw values with their units (UC6)
         //result is expressed in unit1 (first operand's unit)
-        //provides flexibility for different use cases
         public static QuantityLength Add(double value1, LengthUnit unit1, double value2, LengthUnit unit2)
         {
             QuantityLength first = new QuantityLength(value1, unit1);

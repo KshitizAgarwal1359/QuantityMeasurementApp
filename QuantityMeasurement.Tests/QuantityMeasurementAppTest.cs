@@ -692,5 +692,165 @@ namespace QuantityMeasurement.Tests
             Assert.Equal(72.0, result.MeasurementValue, 6);
             Assert.Equal(LengthUnit.INCH, result.Unit);
         }
+        //Addition with Target Unit Tests (uc7)
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), FEET) should return Quantity(2.0, FEET)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Feet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), INCHES) should return Quantity(24.0, INCHES)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Inches()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(24.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), YARDS) should return ~0.666667 YARDS
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Yards()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // add(Quantity(1.0, INCHES), Quantity(1.0, INCHES), CENTIMETERS) should return ~5.08 CM
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Centimeters()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.CENTIMETERS);
+            Assert.Equal(5.08, result.MeasurementValue, 2);
+            Assert.Equal(LengthUnit.CENTIMETERS, result.Unit);
+        }
+        // add(Quantity(2.0, YARDS), Quantity(3.0, FEET), YARDS) should return Quantity(3.0, YARDS)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SameAsFirstOperand()
+        {
+            QuantityLength first = new QuantityLength(2.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // add(Quantity(2.0, YARDS), Quantity(3.0, FEET), FEET) should return Quantity(9.0, FEET)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SameAsSecondOperand()
+        {
+            QuantityLength first = new QuantityLength(2.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(9.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Commutativity with target unit: add(A, B, T) == add(B, A, T)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Commutativity()
+        {
+            QuantityLength feet = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength inches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result1 = feet.Add(inches, LengthUnit.YARDS);
+            QuantityLength result2 = inches.Add(feet, LengthUnit.YARDS);
+            Assert.Equal(result1.MeasurementValue, result2.MeasurementValue, 6);
+            Assert.Equal(result1.Unit, result2.Unit);
+        }
+        // Zero with explicit target unit: 5 feet + 0 inches -> YARDS = ~1.666667
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_WithZero()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength zero = new QuantityLength(0.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(zero, LengthUnit.YARDS);
+            Assert.Equal(1.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // Negative with explicit target unit: 5 feet + (-2 feet) -> INCHES = 36.0
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_NegativeValues()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(-2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(36.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Large to small scale: 1000 feet + 500 feet -> INCHES = 18000
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_LargeToSmallScale()
+        {
+            QuantityLength first = new QuantityLength(1000.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(500.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(18000.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Small to large scale: 12 inches + 12 inches -> YARDS = ~0.666667
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SmallToLargeScale()
+        {
+            QuantityLength first = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // 36 inches + 1 yard -> FEET = 6.0
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_InchPlusYardToFeet()
+        {
+            QuantityLength first = new QuantityLength(36.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(6.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Mathematical equivalence: same addition in different target units represents same physical length
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_MathematicalEquivalence()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength resultInFeet = first.Add(second, LengthUnit.FEET);
+            QuantityLength resultInInches = first.Add(second, LengthUnit.INCH);
+            QuantityLength resultInYards = first.Add(second, LengthUnit.YARDS);
+            // All should represent the same physical length (2 feet)
+            // Using Convert to compare in common unit to handle floating-point rounding
+            double feetValue = resultInFeet.MeasurementValue;
+            double inchesInFeet = QuantityLength.Convert(resultInInches.MeasurementValue, LengthUnit.INCH, LengthUnit.FEET);
+            double yardsInFeet = QuantityLength.Convert(resultInYards.MeasurementValue, LengthUnit.YARDS, LengthUnit.FEET);
+            Assert.Equal(feetValue, inchesInFeet, 4);
+            Assert.Equal(feetValue, yardsInFeet, 4);
+        }
+        //precision tolerance: multiple additions verified with epsilon
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_PrecisionTolerance()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            double expected = 0.787402;
+            Assert.True(Math.Abs(result.MeasurementValue - expected) < 1e-4,
+                $"Expected ~{expected} but got {result.MeasurementValue}");
+        }
+        //static Add method with explicit target unit
+        [Fact]
+        public void TestAddition_StaticMethod_WithTargetUnit()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = QuantityLength.Add(first, second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
     }
 }

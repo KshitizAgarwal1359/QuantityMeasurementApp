@@ -45,5 +45,11 @@ namespace QuantityMeasurement.Services
         {
             return QuantityLength.Add(first, second);
         }
+        //adds two QuantityLength measurements with explicit target unit (UC7)
+        //result is expressed in the specified target unit
+        public QuantityLength AddLengthMeasurements(QuantityLength first, QuantityLength second, LengthUnit targetUnit)
+        {
+            return QuantityLength.Add(first, second, targetUnit);
+        }
     }
 }

@@ -61,8 +61,7 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {convertedQuantity}");
             Console.WriteLine();
         }
-        //demonstrates the addition feature with two QuantityLength objects
-        //result is in the unit of the first operand
+        //demonstrates the UC6 addition feature (result in first operand's unit)
         public static void DemonstrateLengthAddition(QuantityLength first, QuantityLength second)
         {
             QuantityLength result = first.Add(second);
@@ -70,24 +69,41 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {result}");
             Console.WriteLine();
         }
-        //method Overloading: DemonstrateLengthAddition with raw values and units
+        // Method Overloading: DemonstrateLengthAddition with raw values
         public static void DemonstrateLengthAddition(double value1, LengthUnit unit1, double value2, LengthUnit unit2)
         {
             QuantityLength first = new QuantityLength(value1, unit1);
             QuantityLength second = new QuantityLength(value2, unit2);
             DemonstrateLengthAddition(first, second);
         }
+        //uc7: demonstrates addition with explicit target unit specification
+        public static void DemonstrateLengthAddition(double value1, LengthUnit unit1, double value2, LengthUnit unit2, LengthUnit targetUnit)
+        {
+            QuantityLength first = new QuantityLength(value1, unit1);
+            QuantityLength second = new QuantityLength(value2, unit2);
+            QuantityLength result = first.Add(second, targetUnit);
+            Console.WriteLine($"Adding {first} + {second} => target: {targetUnit}");
+            Console.WriteLine($"Result: {result}");
+            Console.WriteLine();
+        }
+        //uc7: demonstrates addition with explicit target unit using QuantityLength objects
+        public static void DemonstrateLengthAddition(QuantityLength first, QuantityLength second, LengthUnit targetUnit)
+        {
+            QuantityLength result = first.Add(second, targetUnit);
+            Console.WriteLine($"Adding {first} + {second} => target: {targetUnit}");
+            Console.WriteLine($"Result: {result}");
+            Console.WriteLine();
+        }
         // Main method to demonstrate all features
         public static void Main(string[] args)
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC6: Length Addition");
+            Console.WriteLine("   UC7: Addition with Target Unit");
             Console.WriteLine("========================================");
             Console.WriteLine();
-            // UC1: Feet equality
+            // UC1 & UC2
             DemonstrateFeetEquality();
-            // UC2: Inches equality
             DemonstrateInchesEquality();
             // UC3/UC4: Cross-unit equality
             Console.WriteLine("--- Cross-Unit Equality (UC3/UC4) ---");
@@ -97,25 +113,29 @@ namespace QuantityMeasurement
             Console.WriteLine("--- Unit Conversion (UC5) ---");
             Console.WriteLine();
             DemonstrateLengthConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);
-            // UC6: Length Addition
+            // UC6: Addition (result in first operand's unit)
             Console.WriteLine("--- Length Addition (UC6) ---");
             Console.WriteLine();
-            // Same unit: 1 foot + 2 feet = 3 feet
-            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 2.0, LengthUnit.FEET);
-            // Cross-unit: 1 foot + 12 inches = 2 feet
             DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
-            // Cross-unit: 12 inches + 1 foot = 24 inches (result in first operand's unit)
-            DemonstrateLengthAddition(12.0, LengthUnit.INCH, 1.0, LengthUnit.FEET);
-            // Yard + Feet: 1 yard + 3 feet = 2 yards
-            DemonstrateLengthAddition(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET);
-            // Inches + Yard: 36 inches + 1 yard = 72 inches
-            DemonstrateLengthAddition(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS);
-            // CM + Inches: 2.54 cm + 1 inch = ~5.08 cm
-            DemonstrateLengthAddition(2.54, LengthUnit.CENTIMETERS, 1.0, LengthUnit.INCH);
-            // Adding zero: 5 feet + 0 inches = 5 feet
-            DemonstrateLengthAddition(5.0, LengthUnit.FEET, 0.0, LengthUnit.INCH);
-            // Negative: 5 feet + (-2 feet) = 3 feet
-            DemonstrateLengthAddition(5.0, LengthUnit.FEET, -2.0, LengthUnit.FEET);
+            // UC7: Addition with explicit target unit
+            Console.WriteLine("--- Addition with Target Unit (UC7) ---");
+            Console.WriteLine();
+            // Result in FEET
+            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.FEET);
+            // Result in INCHES
+            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.INCH);
+            // Result in YARDS (different from both operands)
+            DemonstrateLengthAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH, LengthUnit.YARDS);
+            // Yards + Feet -> YARDS
+            DemonstrateLengthAddition(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET, LengthUnit.YARDS);
+            // 36 Inches + 1 Yard -> FEET
+            DemonstrateLengthAddition(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS, LengthUnit.FEET);
+            // CM + Inches -> CENTIMETERS
+            DemonstrateLengthAddition(2.54, LengthUnit.CENTIMETERS, 1.0, LengthUnit.INCH, LengthUnit.CENTIMETERS);
+            // Zero with target unit: 5 feet + 0 inches -> YARDS
+            DemonstrateLengthAddition(5.0, LengthUnit.FEET, 0.0, LengthUnit.INCH, LengthUnit.YARDS);
+            // Negative with target unit: 5 feet + (-2 feet) -> INCHES
+            DemonstrateLengthAddition(5.0, LengthUnit.FEET, -2.0, LengthUnit.FEET, LengthUnit.INCH);
             Console.WriteLine("========================================");
             Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");
