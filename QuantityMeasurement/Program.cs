@@ -82,7 +82,7 @@ namespace QuantityMeasurement
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC10: Generic Quantity<U> Design");
+            Console.WriteLine("   UC11: Volume Measurement Support");
             Console.WriteLine("========================================");
             Console.WriteLine();
 
@@ -106,30 +106,25 @@ namespace QuantityMeasurement
             Console.WriteLine();
             DemonstrateAddition(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
             DemonstrateAddition(1.0, LengthUnit.YARDS, 3.0, LengthUnit.FEET, LengthUnit.YARDS);
-
             // UC8: LengthUnit standalone conversion (now via IMeasurable)
             Console.WriteLine("--- LengthUnit IMeasurable Methods (UC8/UC10) ---");
             Console.WriteLine();
             double inchBaseValue = LengthUnit.INCH.ConvertToBaseUnit(12.0);
             Console.WriteLine($"LengthUnit.INCH.ConvertToBaseUnit(12.0) = {inchBaseValue}");
             Console.WriteLine();
-
             // UC9: Weight — using SAME generic methods as length
             Console.WriteLine("--- Weight Equality (UC9 via Generic) ---");
             Console.WriteLine();
             DemonstrateComparison(1.0, WeightUnit.KILOGRAM, 1.0, WeightUnit.KILOGRAM);
             DemonstrateComparison(1.0, WeightUnit.KILOGRAM, 1000.0, WeightUnit.GRAM);
-
             Console.WriteLine("--- Weight Conversion (UC9 via Generic) ---");
             Console.WriteLine();
             DemonstrateConversion(1.0, WeightUnit.KILOGRAM, WeightUnit.GRAM);
             DemonstrateConversion(2.0, WeightUnit.POUND, WeightUnit.KILOGRAM);
-
             Console.WriteLine("--- Weight Addition (UC9 via Generic) ---");
             Console.WriteLine();
             DemonstrateAddition(1.0, WeightUnit.KILOGRAM, 1000.0, WeightUnit.GRAM);
             DemonstrateAddition(1.0, WeightUnit.KILOGRAM, 1000.0, WeightUnit.GRAM, WeightUnit.GRAM);
-
             // UC10: Cross-category prevention — type safety
             Console.WriteLine("--- Cross-Category Type Safety (UC10) ---");
             Console.WriteLine();
@@ -139,7 +134,34 @@ namespace QuantityMeasurement
             Console.WriteLine($"Comparing {oneKg} (weight) and {oneFoot} (length)");
             Console.WriteLine($"Result: Equal ({crossCategoryEqual})");
             Console.WriteLine();
-
+            // UC11: Volume Measurement — using SAME generic methods (validates UC10 scalability)
+            Console.WriteLine("--- Volume Equality (UC11 via Generic) ---");
+            Console.WriteLine();
+            DemonstrateComparison(1.0, VolumeUnit.LITRE, 1.0, VolumeUnit.LITRE);
+            DemonstrateComparison(1.0, VolumeUnit.LITRE, 1000.0, VolumeUnit.MILLILITRE);
+            DemonstrateComparison(500.0, VolumeUnit.MILLILITRE, 0.5, VolumeUnit.LITRE);
+            Console.WriteLine("--- Volume Conversion (UC11 via Generic) ---");
+            Console.WriteLine();
+            DemonstrateConversion(1.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            DemonstrateConversion(2.0, VolumeUnit.GALLON, VolumeUnit.LITRE);
+            DemonstrateConversion(0.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            Console.WriteLine("--- Volume Addition (UC11 via Generic) ---");
+            Console.WriteLine();
+            DemonstrateAddition(1.0, VolumeUnit.LITRE, 2.0, VolumeUnit.LITRE);
+            DemonstrateAddition(1.0, VolumeUnit.LITRE, 1000.0, VolumeUnit.MILLILITRE);
+            DemonstrateAddition(1.0, VolumeUnit.LITRE, 1000.0, VolumeUnit.MILLILITRE, VolumeUnit.MILLILITRE);
+            // UC11: Cross-category incompatibility — volume vs length and weight
+            Console.WriteLine("--- Volume Cross-Category Safety (UC11) ---");
+            Console.WriteLine();
+            QuantityVolume oneLitre = new QuantityVolume(1.0, VolumeUnit.LITRE);
+            bool volumeVsLength = oneLitre.Equals(oneFoot);
+            Console.WriteLine($"Comparing {oneLitre} (volume) and {oneFoot} (length)");
+            Console.WriteLine($"Result: Equal ({volumeVsLength})");
+            Console.WriteLine();
+            bool volumeVsWeight = oneLitre.Equals(oneKg);
+            Console.WriteLine($"Comparing {oneLitre} (volume) and {oneKg} (weight)");
+            Console.WriteLine($"Result: Equal ({volumeVsWeight})");
+            Console.WriteLine();
             Console.WriteLine("========================================");
             Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");

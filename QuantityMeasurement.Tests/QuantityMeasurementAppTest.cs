@@ -1425,5 +1425,415 @@ namespace QuantityMeasurement.Tests
             Assert.Equal("5 feet", feet.ToString());
             Assert.Equal("3 kg", kg.ToString());
         }
+        //Volume Measurement Tests(UC11)
+        //VolumeUnit enum: LITRE has correct conversion factor of 1.0
+        [Fact]
+        public void TestVolumeUnitEnum_LitreConstant()
+        {
+            Assert.Equal(1.0, VolumeUnit.LITRE.GetConversionFactor(), 6);
+        }
+        // VolumeUnit enum: MILLI LITRE has correct conversion factor of 0.001
+        [Fact]
+        public void TestVolumeUnitEnum_MillilitreConstant()
+        {
+            Assert.Equal(0.001, VolumeUnit.MILLILITRE.GetConversionFactor(), 6);
+        }
+        // VolumeUnit enum: GALLON has correct conversion factor of 3.78541
+        [Fact]
+        public void TestVolumeUnitEnum_GallonConstant()
+        {
+            Assert.Equal(3.78541, VolumeUnit.GALLON.GetConversionFactor(), 5);
+        }
+        // VolumeUnit IMeasurable: ConvertToBaseUnit for LITRE (identity)
+        [Fact]
+        public void TestConvertToBaseUnit_LitreToLitre()
+        {
+            double result = VolumeUnit.LITRE.ConvertToBaseUnit(5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertToBaseUnit for MILLILITRE
+        [Fact]
+        public void TestConvertToBaseUnit_MillilitreToLitre()
+        {
+            double result = VolumeUnit.MILLILITRE.ConvertToBaseUnit(1000.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertToBaseUnit for GALLON
+        [Fact]
+        public void TestConvertToBaseUnit_GallonToLitre()
+        {
+            double result = VolumeUnit.GALLON.ConvertToBaseUnit(1.0);
+            Assert.Equal(3.78541, result, 5);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for LITRE (identity)
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToLitre_Volume()
+        {
+            double result = VolumeUnit.LITRE.ConvertFromBaseUnit(2.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for MILLILITRE
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToMillilitre()
+        {
+            double result = VolumeUnit.MILLILITRE.ConvertFromBaseUnit(1.0);
+            Assert.Equal(1000.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for GALLON
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToGallon()
+        {
+            double result = VolumeUnit.GALLON.ConvertFromBaseUnit(3.78541);
+            Assert.Equal(1.0, result, 4);
+        }
+        //VolumeUnit IMeasurable: GetUnitName returns correct labels
+        [Fact]
+        public void TestVolumeUnit_GetUnitName()
+        {
+            Assert.Equal("L", VolumeUnit.LITRE.GetUnitName());
+            Assert.Equal("mL", VolumeUnit.MILLILITRE.GetUnitName());
+            Assert.Equal("gal", VolumeUnit.GALLON.GetUnitName());
+        }
+        //Litre-to-Litre equality: same value
+        [Fact]
+        public void TestEquality_LitreToLitre_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(first.Equals(second));
+        }
+        //Litre-to-Litre equality: different value
+        [Fact]
+        public void TestEquality_LitreToLitre_DifferentValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Assert.False(first.Equals(second));
+        }
+        //Millilitre-to-Millilitre equality
+        [Fact]
+        public void TestEquality_MillilitreToMillilitre_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Assert.True(first.Equals(second));
+        }
+        // Gallon-to-Gallon equality
+        [Fact]
+        public void TestEquality_GallonToGallon_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(2.0, VolumeUnit.GALLON);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.GALLON);
+            Assert.True(first.Equals(second));
+        }
+        // Cross-unit equality: 1 L = 1000 mL
+        [Fact]
+        public void TestEquality_LitreToMillilitre_EquivalentValue()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Assert.True(oneLitre.Equals(thousandMl));
+        }
+        // Cross-unit equality: 1000 mL = 1 L (symmetric)
+        [Fact]
+        public void TestEquality_MillilitreToLitre_EquivalentValue()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(thousandMl.Equals(oneLitre));
+        }
+        // Volume vs Length: incompatible categories
+        [Fact]
+        public void TestEquality_VolumeVsLength_Incompatible()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Assert.False(oneLitre.Equals(oneFoot));
+        }
+        // Volume vs Weight: incompatible categories
+        [Fact]
+        public void TestEquality_VolumeVsWeight_Incompatible()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Assert.False(oneLitre.Equals(oneKg));
+        }
+        // Null comparison
+        [Fact]
+        public void TestEquality_Volume_NullComparison()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.False(oneLitre.Equals(null));
+        }
+        // Same reference (reflexive)
+        [Fact]
+        public void TestEquality_Volume_SameReference()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(oneLitre.Equals(oneLitre));
+        }
+        // Transitive property
+        [Fact]
+        public void TestEquality_Volume_TransitiveProperty()
+        {
+            Quantity<VolumeUnit> a = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> b = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> c = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(a.Equals(b));
+            Assert.True(b.Equals(c));
+            Assert.True(a.Equals(c));
+        }
+        // Zero values equal across units
+        [Fact]
+        public void TestEquality_Volume_ZeroValue()
+        {
+            Quantity<VolumeUnit> zeroLitre = new Quantity<VolumeUnit>(0.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> zeroMl = new Quantity<VolumeUnit>(0.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> zeroGal = new Quantity<VolumeUnit>(0.0, VolumeUnit.GALLON);
+            Assert.True(zeroLitre.Equals(zeroMl));
+            Assert.True(zeroLitre.Equals(zeroGal));
+        }
+        // Negative volume equality
+        [Fact]
+        public void TestEquality_Volume_NegativeValue()
+        {
+            Quantity<VolumeUnit> negLitre = new Quantity<VolumeUnit>(-1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> negMl = new Quantity<VolumeUnit>(-1000.0, VolumeUnit.MILLILITRE);
+            Assert.True(negLitre.Equals(negMl));
+        }
+        // Large volume value equality
+        [Fact]
+        public void TestEquality_Volume_LargeValue()
+        {
+            Quantity<VolumeUnit> largeMl = new Quantity<VolumeUnit>(1000000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> largeLitre = new Quantity<VolumeUnit>(1000.0, VolumeUnit.LITRE);
+            Assert.True(largeMl.Equals(largeLitre));
+        }
+        // Small volume value equality
+        [Fact]
+        public void TestEquality_Volume_SmallValue()
+        {
+            Quantity<VolumeUnit> smallLitre = new Quantity<VolumeUnit>(0.001, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> oneMl = new Quantity<VolumeUnit>(1.0, VolumeUnit.MILLILITRE);
+            Assert.True(smallLitre.Equals(oneMl));
+        }
+        // Conversion: Litre to Millilitre
+        [Fact]
+        public void TestConversion_LitreToMillilitre()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = oneLitre.ConvertTo(VolumeUnit.MILLILITRE);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, converted.Unit);
+        }
+        // Conversion: Millilitre to Litre
+        [Fact]
+        public void TestConversion_MillilitreToLitre()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> converted = thousandMl.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(1.0, converted.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, converted.Unit);
+        }
+        // Conversion: Gallon to Litre
+        [Fact]
+        public void TestConversion_GallonToLitre()
+        {
+            Quantity<VolumeUnit> oneGallon = new Quantity<VolumeUnit>(1.0, VolumeUnit.GALLON);
+            Quantity<VolumeUnit> converted = oneGallon.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(3.78541, converted.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.LITRE, converted.Unit);
+        }
+        // Conversion: Litre to Gallon
+        [Fact]
+        public void TestConversion_LitreToGallon()
+        {
+            Quantity<VolumeUnit> litres = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = litres.ConvertTo(VolumeUnit.GALLON);
+            Assert.Equal(1.0, converted.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.GALLON, converted.Unit);
+        }
+        // Conversion: Same unit returns unchanged
+        [Fact]
+        public void TestConversion_Volume_SameUnit()
+        {
+            Quantity<VolumeUnit> fiveLitres = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = fiveLitres.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(5.0, converted.MeasurementValue, 6);
+        }
+        // Conversion: Zero value
+        [Fact]
+        public void TestConversion_Volume_ZeroValue()
+        {
+            double result = Quantity<VolumeUnit>.Convert(0.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            Assert.Equal(0.0, result, 6);
+        }
+        // Conversion: Negative value preserves sign
+        [Fact]
+        public void TestConversion_Volume_NegativeValue()
+        {
+            double result = Quantity<VolumeUnit>.Convert(-1.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            Assert.Equal(-1000.0, result, 6);
+        }
+        // Conversion: Round-trip preserves value
+        [Fact]
+        public void TestConversion_Volume_RoundTrip()
+        {
+            double originalValue = 1.5;
+            double toMl = Quantity<VolumeUnit>.Convert(originalValue, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            double backToLitre = Quantity<VolumeUnit>.Convert(toMl, VolumeUnit.MILLILITRE, VolumeUnit.LITRE);
+            Assert.Equal(originalValue, backToLitre, 4);
+        }
+        // Conversion: Millilitre to Gallon
+        [Fact]
+        public void TestConversion_MillilitreToGallon()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> converted = thousandMl.ConvertTo(VolumeUnit.GALLON);
+            Assert.Equal(0.264172, converted.MeasurementValue, 3);
+            Assert.Equal(VolumeUnit.GALLON, converted.Unit);
+        }
+        // Addition: Same unit (L + L)
+        [Fact]
+        public void TestAddition_Volume_SameUnit_LitrePlusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Same unit (mL + mL)
+        [Fact]
+        public void TestAddition_Volume_SameUnit_MillilitrePlusMillilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(1000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Cross-unit (L + mL) result in litres
+        [Fact]
+        public void TestAddition_Volume_CrossUnit_LitrePlusMillilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Cross-unit (mL + L) result in millilitres
+        [Fact]
+        public void TestAddition_Volume_CrossUnit_MillilitrePlusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Explicit target unit (L + mL -> mL)
+        [Fact]
+        public void TestAddition_Volume_ExplicitTargetUnit_Millilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Explicit target unit (L + L -> gal)
+        [Fact]
+        public void TestAddition_Volume_ExplicitTargetUnit_Gallon()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second, VolumeUnit.GALLON);
+            Assert.Equal(2.0, result.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.GALLON, result.Unit);
+        }
+        // Addition: Commutativity
+        [Fact]
+        public void TestAddition_Volume_Commutativity()
+        {
+            Quantity<VolumeUnit> litre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> ml = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> resultLitreFirst = litre.Add(ml);
+            Quantity<VolumeUnit> resultMlFirst = ml.Add(litre);
+            Assert.True(resultLitreFirst.Equals(resultMlFirst));
+        }
+        // Addition: With zero (identity element)
+        [Fact]
+        public void TestAddition_Volume_WithZero()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> zero = new Quantity<VolumeUnit>(0.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Negative values
+        [Fact]
+        public void TestAddition_Volume_NegativeValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(-2000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Large values
+        [Fact]
+        public void TestAddition_Volume_LargeValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1e6, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1e6, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Small values
+        [Fact]
+        public void TestAddition_Volume_SmallValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(0.001, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(0.002, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(0.003, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Generic Quantity works seamlessly with VolumeUnit — no special handling needed
+        [Fact]
+        public void TestGenericQuantity_VolumeOperations_Consistency()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            // Equality via generic Quantity<U>.Equals
+            Assert.True(oneLitre.Equals(thousandMl));
+            // Conversion via generic Quantity<U>.ConvertTo
+            Quantity<VolumeUnit> converted = oneLitre.ConvertTo(VolumeUnit.MILLILITRE);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            // Addition via generic Quantity<U>.Add
+            Quantity<VolumeUnit> sum = oneLitre.Add(thousandMl, VolumeUnit.LITRE);
+            Assert.Equal(2.0, sum.MeasurementValue, 6);
+        }
+        // Scalability validation: volume integrates without modifying Quantity<U>
+        [Fact]
+        public void TestScalability_VolumeIntegration()
+        {
+            // All three categories coexist; same Quantity<U> logic handles all
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<VolumeUnit> litre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            // Each operates independently
+            Assert.Equal(12.0, feet.ConvertTo(LengthUnit.INCH).MeasurementValue, 6);
+            Assert.Equal(1000.0, kg.ConvertTo(WeightUnit.GRAM).MeasurementValue, 6);
+            Assert.Equal(1000.0, litre.ConvertTo(VolumeUnit.MILLILITRE).MeasurementValue, 6);
+            // Cross-category prevention holds across all three
+            Assert.False(feet.Equals(kg));
+            Assert.False(kg.Equals(litre));
+            Assert.False(litre.Equals(feet));
+        }
     }
 }
