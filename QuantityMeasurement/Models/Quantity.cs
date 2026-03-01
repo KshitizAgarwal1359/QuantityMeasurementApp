@@ -104,9 +104,55 @@ namespace QuantityMeasurement.Models
             Quantity<U> second = new Quantity<U>(value2, unit2);
             return first.Add(second);
         }
+        // UC12: Private utility subtraction method — mirrors AddAndConvertToTargetUnit pattern.
+        // Converts both quantities to base unit, subtracts them, and converts result to target unit.
+        // Used by both Subtract(other) and Subtract(other, targetUnit) to avoid DRY violation.
+        private Quantity<U> SubtractAndConvertToTargetUnit(Quantity<U> other, U targetUnit)
+        {
+            if (other is null)
+            {
+                throw new ArgumentException("Cannot subtract null measurement. The second operand must be a valid Quantity.");
+            }
+            double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
+            double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
+            double differenceInBaseUnit = thisBaseValue - otherBaseValue;
+            double resultValue = targetUnit.ConvertFromBaseUnit(differenceInBaseUnit);
+            resultValue = Math.Round(resultValue, 6);
+            return new Quantity<U>(resultValue, targetUnit);
+        }
+        // UC12: Instance method for subtraction — result in THIS object's unit (first operand's unit).
+        // Subtraction is non-commutative: A.Subtract(B) ≠ B.Subtract(A)
+        public Quantity<U> Subtract(Quantity<U> other)
+        {
+            return SubtractAndConvertToTargetUnit(other, this.unit);
+        }
+        // UC12: Instance method for subtraction with explicit target unit.
+        public Quantity<U> Subtract(Quantity<U> other, U targetUnit)
+        {
+            return SubtractAndConvertToTargetUnit(other, targetUnit);
+        }
+        // UC12: Division method — returns a dimensionless double (ratio).
+        // Converts both quantities to base unit and divides.
+        // Division by zero throws ArithmeticException (fail-fast principle).
+        // Division is non-commutative: A.Divide(B) ≠ B.Divide(A)
+        // Result interpretation: > 1.0 means first is larger, < 1.0 means second is larger, = 1.0 means equal.
+        public double Divide(Quantity<U> other)
+        {
+            if (other is null)
+            {
+                throw new ArgumentException("Cannot divide by null measurement. The divisor must be a valid Quantity.");
+            }
+            double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
+            double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
+            if (otherBaseValue == 0.0)
+            {
+                throw new ArithmeticException("Cannot divide by zero. The divisor quantity must have a non-zero value.");
+            }
+            return thisBaseValue / otherBaseValue;
+        }
         //override Equals for value-based comparison with cross-unit support.
         //delegates to IMeasurable.ConvertToBaseUnit() for normalization. 
-        // Cross-category type safety: GetType() check ensures that Quantity&lt;LengthUnit&gt; and Quantity&lt;WeightUnit&gt; are never considered equal. C# reified generics make these distinct runtime types (no type erasure).
+        // Cross-category type safety: GetType() check ensures that Quantity<LengthUnit> and Quantity<WeightUnit> are never considered equal. C# reified generics make these distinct runtime types (no type erasure).
         public override bool Equals(object? obj)
         {
             if (ReferenceEquals(this, obj))

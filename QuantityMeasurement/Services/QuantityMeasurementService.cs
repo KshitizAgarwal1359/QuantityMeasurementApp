@@ -100,5 +100,20 @@ namespace QuantityMeasurement.Services
         {
             return Quantity<U>.Add(first, second, targetUnit);
         }
+        // UC12: Generic subtraction method — works with any measurement category
+        public Quantity<U> SubtractQuantityMeasurements<U>(Quantity<U> first, Quantity<U> second) where U : class, IMeasurable
+        {
+            return first.Subtract(second);
+        }
+        // UC12: Generic subtraction with target unit — works with any measurement category
+        public Quantity<U> SubtractQuantityMeasurements<U>(Quantity<U> first, Quantity<U> second, U targetUnit) where U : class, IMeasurable
+        {
+            return first.Subtract(second, targetUnit);
+        }
+        // UC12: Generic division method — works with any measurement category
+        public double DivideQuantityMeasurements<U>(Quantity<U> first, Quantity<U> second) where U : class, IMeasurable
+        {
+            return first.Divide(second);
+        }
     }
 }

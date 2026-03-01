@@ -1835,5 +1835,381 @@ namespace QuantityMeasurement.Tests
             Assert.False(kg.Equals(litre));
             Assert.False(litre.Equals(feet));
         }
+
+        // ==================== Subtraction and Division Tests (UC12) ====================
+
+        // Subtraction: same unit (feet - feet)
+        [Fact]
+        public void TestSubtraction_SameUnit_FeetMinusFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: same unit (litre - litre)
+        [Fact]
+        public void TestSubtraction_SameUnit_LitreMinusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(3.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Subtraction: cross-unit (feet - inches), result in feet
+        [Fact]
+        public void TestSubtraction_CrossUnit_FeetMinusInches()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: cross-unit (inches - feet), result in inches
+        [Fact]
+        public void TestSubtraction_CrossUnit_InchesMinusFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(120.0, LengthUnit.INCH);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(60.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Subtraction: explicit target unit (feet - inches -> feet)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Feet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.FEET);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: explicit target unit (feet - inches -> inches)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Inches()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.INCH);
+            Assert.Equal(114.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Subtraction: explicit target unit (litre - litre -> millilitre)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Millilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(3000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Subtraction: resulting in negative value
+        [Fact]
+        public void TestSubtraction_ResultingInNegative()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(-5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: resulting in zero
+        [Fact]
+        public void TestSubtraction_ResultingInZero()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(120.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(0.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: with zero operand (identity element)
+        [Fact]
+        public void TestSubtraction_WithZeroOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: with negative operand (subtracting negative = adding)
+        [Fact]
+        public void TestSubtraction_WithNegativeValues()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(-2.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: non-commutative (A - B ≠ B - A)
+        [Fact]
+        public void TestSubtraction_NonCommutative()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> aMb = a.Subtract(b);
+            Quantity<LengthUnit> bMa = b.Subtract(a);
+            Assert.Equal(5.0, aMb.MeasurementValue, 6);
+            Assert.Equal(-5.0, bMa.MeasurementValue, 6);
+        }
+        // Subtraction: large values
+        [Fact]
+        public void TestSubtraction_WithLargeValues()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5e5, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> result = first.Subtract(second);
+            Assert.Equal(5e5, result.MeasurementValue, 6);
+        }
+        // Subtraction: small values
+        [Fact]
+        public void TestSubtraction_WithSmallValues()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(0.001, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0005, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(0.0005, result.MeasurementValue, 6);
+        }
+        // Subtraction: null operand throws ArgumentException
+        [Fact]
+        public void TestSubtraction_NullOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Subtract(null!));
+        }
+        // Subtraction: works across all measurement categories
+        [Fact]
+        public void TestSubtraction_AllMeasurementCategories()
+        {
+            // Length
+            Quantity<LengthUnit> lenResult = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(3.0, LengthUnit.FEET));
+            Assert.Equal(7.0, lenResult.MeasurementValue, 6);
+            // Weight
+            Quantity<WeightUnit> wgtResult = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Subtract(new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM));
+            Assert.Equal(5.0, wgtResult.MeasurementValue, 6);
+            // Volume
+            Quantity<VolumeUnit> volResult = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE).Subtract(new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(4.5, volResult.MeasurementValue, 6);
+        }
+        // Subtraction: chained operations
+        [Fact]
+        public void TestSubtraction_ChainedOperations()
+        {
+            Quantity<LengthUnit> result = new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Subtract(new Quantity<LengthUnit>(2.0, LengthUnit.FEET))
+                .Subtract(new Quantity<LengthUnit>(1.0, LengthUnit.FEET));
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: immutability — originals unchanged
+        [Fact]
+        public void TestSubtraction_Immutability()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Subtract(other);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // Subtraction + Addition inverse: A + B - B ≈ A
+        [Fact]
+        public void TestSubtractionAddition_Inverse()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> aPlusB = a.Add(b);
+            Quantity<LengthUnit> result = aPlusB.Subtract(b);
+            Assert.Equal(a.MeasurementValue, result.MeasurementValue, 6);
+        }
+
+        // Division: same unit (feet / feet)
+        [Fact]
+        public void TestDivision_SameUnit_FeetDividedByFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Division: same unit (litre / litre)
+        [Fact]
+        public void TestDivision_SameUnit_LitreDividedByLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Division: cross-unit (inches / feet)
+        [Fact]
+        public void TestDivision_CrossUnit_InchesDividedByFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(24.0, LengthUnit.INCH);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: cross-unit (kilogram / gram)
+        [Fact]
+        public void TestDivision_CrossUnit_KilogramDividedByGram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(2.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(2000.0, WeightUnit.GRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: ratio greater than 1
+        [Fact]
+        public void TestDivision_RatioGreaterThanOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Division: ratio less than 1
+        [Fact]
+        public void TestDivision_RatioLessThanOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(0.5, result, 6);
+        }
+        // Division: ratio equal to 1
+        [Fact]
+        public void TestDivision_RatioEqualToOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: non-commutative (A / B ≠ B / A)
+        [Fact]
+        public void TestDivision_NonCommutative()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double aDb = a.Divide(b);
+            double bDa = b.Divide(a);
+            Assert.Equal(2.0, aDb, 6);
+            Assert.Equal(0.5, bDa, 6);
+        }
+        // Division: by zero throws ArithmeticException
+        [Fact]
+        public void TestDivision_ByZero()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.FEET);
+            Assert.Throws<ArithmeticException>(() => first.Divide(second));
+        }
+        // Division: very large ratio
+        [Fact]
+        public void TestDivision_WithLargeRatio()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1e6, result, 6);
+        }
+        // Division: very small ratio
+        [Fact]
+        public void TestDivision_WithSmallRatio()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1e-6, result, 12);
+        }
+        // Division: null operand throws ArgumentException
+        [Fact]
+        public void TestDivision_NullOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Divide(null!));
+        }
+        // Division: works across all measurement categories
+        [Fact]
+        public void TestDivision_AllMeasurementCategories()
+        {
+            // Length
+            double lenRatio = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET));
+            Assert.Equal(2.0, lenRatio, 6);
+            // Weight
+            double wgtRatio = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Divide(new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM));
+            Assert.Equal(2.0, wgtRatio, 6);
+            // Volume
+            double volRatio = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE).Divide(new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE));
+            Assert.Equal(2.0, volRatio, 6);
+        }
+        // Division: immutability — originals unchanged
+        [Fact]
+        public void TestDivision_Immutability()
+        {
+            Quantity<LengthUnit> originalDividend = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> originalDivisor = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = originalDividend.Divide(originalDivisor);
+            Assert.Equal(10.0, originalDividend.MeasurementValue, 6);
+            Assert.Equal(5.0, originalDivisor.MeasurementValue, 6);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Division: cross-unit (millilitre / litre)
+        [Fact]
+        public void TestDivision_CrossUnit_MillilitreDividedByLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Integration: subtraction and division coexist
+        [Fact]
+        public void TestSubtractionAndDivision_Integration()
+        {
+            // A.Subtract(B).Divide(C) is a valid chained operation
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(4.0, LengthUnit.FEET);
+            Quantity<LengthUnit> c = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> difference = a.Subtract(b);
+            double ratio = difference.Divide(c);
+            Assert.Equal(6.0, difference.MeasurementValue, 6);
+            Assert.Equal(2.0, ratio, 6);
+        }
+        // Subtraction: weight cross-unit (kg - g)
+        [Fact]
+        public void TestSubtraction_Weight_KilogramMinusGram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Subtraction: weight explicit target (kg - g -> g)
+        [Fact]
+        public void TestSubtraction_Weight_ExplicitTargetUnit_Gram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Subtract(second, WeightUnit.GRAM);
+            Assert.Equal(5000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Division: gram / kilogram cross-unit
+        [Fact]
+        public void TestDivision_CrossUnit_GramDividedByKilogram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(2000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
     }
 }

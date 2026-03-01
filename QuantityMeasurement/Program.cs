@@ -77,12 +77,43 @@ namespace QuantityMeasurement
             Console.WriteLine($"Result: {result}");
             Console.WriteLine();
         }
+        // UC12: Generic subtraction demonstration — works with ANY measurement category
+        public static void DemonstrateSubtraction<U>(double value1, U unit1, double value2, U unit2) where U : class, IMeasurable
+        {
+            Quantity<U> first = new Quantity<U>(value1, unit1);
+            Quantity<U> second = new Quantity<U>(value2, unit2);
+            Quantity<U> result = first.Subtract(second);
+            Console.WriteLine($"Subtracting {first} - {second}");
+            Console.WriteLine($"Result: {result}");
+            Console.WriteLine();
+        }
+        // UC12: Generic subtraction with explicit target unit
+        public static void DemonstrateSubtraction<U>(double value1, U unit1, double value2, U unit2, U targetUnit) where U : class, IMeasurable
+        {
+            Quantity<U> first = new Quantity<U>(value1, unit1);
+            Quantity<U> second = new Quantity<U>(value2, unit2);
+            Quantity<U> result = first.Subtract(second, targetUnit);
+            Console.WriteLine($"Subtracting {first} - {second} => target: {targetUnit}");
+            Console.WriteLine($"Result: {result}");
+            Console.WriteLine();
+        }
+        // UC12: Generic division demonstration — works with ANY measurement category
+        // Division returns a dimensionless double (ratio), not a Quantity
+        public static void DemonstrateDivision<U>(double value1, U unit1, double value2, U unit2) where U : class, IMeasurable
+        {
+            Quantity<U> first = new Quantity<U>(value1, unit1);
+            Quantity<U> second = new Quantity<U>(value2, unit2);
+            double ratio = first.Divide(second);
+            Console.WriteLine($"Dividing {first} / {second}");
+            Console.WriteLine($"Result: {ratio}");
+            Console.WriteLine();
+        }
         //main method demonstrates all features with UC10 generic design
         public static void Main(string[] args)
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC11: Volume Measurement Support");
+            Console.WriteLine("   UC12: Subtraction & Division");
             Console.WriteLine("========================================");
             Console.WriteLine();
 
@@ -162,6 +193,23 @@ namespace QuantityMeasurement
             Console.WriteLine($"Comparing {oneLitre} (volume) and {oneKg} (weight)");
             Console.WriteLine($"Result: Equal ({volumeVsWeight})");
             Console.WriteLine();
+            // UC12: Subtraction — across all measurement categories
+            Console.WriteLine("--- Subtraction (UC12) ---");
+            Console.WriteLine();
+            DemonstrateSubtraction(10.0, LengthUnit.FEET, 6.0, LengthUnit.INCH);
+            DemonstrateSubtraction(10.0, WeightUnit.KILOGRAM, 5000.0, WeightUnit.GRAM);
+            DemonstrateSubtraction(5.0, VolumeUnit.LITRE, 500.0, VolumeUnit.MILLILITRE);
+            Console.WriteLine("--- Subtraction with Target Unit (UC12) ---");
+            Console.WriteLine();
+            DemonstrateSubtraction(10.0, LengthUnit.FEET, 6.0, LengthUnit.INCH, LengthUnit.INCH);
+            DemonstrateSubtraction(5.0, VolumeUnit.LITRE, 2.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            // UC12: Division — across all measurement categories
+            Console.WriteLine("--- Division (UC12) ---");
+            Console.WriteLine();
+            DemonstrateDivision(10.0, LengthUnit.FEET, 2.0, LengthUnit.FEET);
+            DemonstrateDivision(24.0, LengthUnit.INCH, 2.0, LengthUnit.FEET);
+            DemonstrateDivision(10.0, WeightUnit.KILOGRAM, 5.0, WeightUnit.KILOGRAM);
+            DemonstrateDivision(5.0, VolumeUnit.LITRE, 10.0, VolumeUnit.LITRE);
             Console.WriteLine("========================================");
             Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");
