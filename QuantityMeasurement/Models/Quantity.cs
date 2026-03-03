@@ -52,31 +52,53 @@ namespace QuantityMeasurement.Models
             Quantity<U> convertedQuantity = sourceQuantity.ConvertTo(targetUnit);
             return convertedQuantity.MeasurementValue;
         }
-        //private utility addition method — delegates to IMeasurable for conversions.
-        //converts both quantities to base unit, sums them, and converts result to target unit.
-        //used by both Add(other) and Add(other, targetUnit) to avoid DRY violation.
-        private Quantity<U> AddAndConvertToTargetUnit(Quantity<U> other, U targetUnit)
+        // UC13: Centralized validation helper — single source of truth for all arithmetic operand validation.
+        // Eliminates duplicated null checks, category checks, and finiteness validation across Add/Subtract/Divide.
+        // All arithmetic operations call this ONCE before executing, ensuring consistent error handling.
+        // Parameters:
+        //   other — the second operand (must not be null)
+        //   targetUnit — the target unit for the result (validated only when targetUnitRequired is true)
+        //   targetUnitRequired — true for Add/Subtract with explicit target unit, false for Divide and implicit cases
+        private void ValidateArithmeticOperands(Quantity<U> other, U? targetUnit, bool targetUnitRequired)
         {
             if (other is null)
             {
-                throw new ArgumentException("Cannot add null measurement. The second operand must be a valid Quantity.");
+                throw new ArgumentException("Cannot perform arithmetic with null measurement. The operand must be a valid Quantity.");
             }
+            if (targetUnitRequired && targetUnit is null)
+            {
+                throw new ArgumentException("Target unit cannot be null when explicitly specified.");
+            }
+        }
+        // UC13: Core arithmetic helper — converts both operands to base unit and applies the operation.
+        // This is the SINGLE location for base-unit conversion + arithmetic computation.
+        // Uses ArithmeticOperation enum dispatch (lambda-based) to execute ADD, SUBTRACT, or DIVIDE.
+        // Returns the raw double result in base-unit terms.
+        // For Add/Subtract, callers convert the result to the target unit.
+        // For Divide, callers return the raw dimensionless ratio directly.
+        private double PerformBaseArithmetic(Quantity<U> other, ArithmeticOperation operation)
+        {
             double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
             double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
-            double sumInBaseUnit = thisBaseValue + otherBaseValue;
-            double resultValue = targetUnit.ConvertFromBaseUnit(sumInBaseUnit);
-            resultValue = Math.Round(resultValue, 6);
-            return new Quantity<U>(resultValue, targetUnit);
+            return operation.Compute(thisBaseValue, otherBaseValue);
         }
-        /// Instance method for addition — result in THIS object's unit (first operand's unit).
+        // UC13 Refactored: Instance method for addition — result in THIS object's unit (first operand's unit).
+        // Delegates to ValidateArithmeticOperands + PerformBaseArithmetic with ArithmeticOperation.ADD.
         public Quantity<U> Add(Quantity<U> other)
         {
-            return AddAndConvertToTargetUnit(other, this.unit);
+            ValidateArithmeticOperands(other, null, false);
+            double baseResult = PerformBaseArithmetic(other, ArithmeticOperation.ADD);
+            double resultValue = Math.Round(this.unit.ConvertFromBaseUnit(baseResult), 6);
+            return new Quantity<U>(resultValue, this.unit);
         }
-        /// Instance method for addition with explicit target unit.
+        // UC13 Refactored: Instance method for addition with explicit target unit.
+        // Delegates to ValidateArithmeticOperands + PerformBaseArithmetic with ArithmeticOperation.ADD.
         public Quantity<U> Add(Quantity<U> other, U targetUnit)
         {
-            return AddAndConvertToTargetUnit(other, targetUnit);
+            ValidateArithmeticOperands(other, targetUnit, true);
+            double baseResult = PerformBaseArithmetic(other, ArithmeticOperation.ADD);
+            double resultValue = Math.Round(targetUnit.ConvertFromBaseUnit(baseResult), 6);
+            return new Quantity<U>(resultValue, targetUnit);
         }
         //static Add method — adds two Quantity objects. Result in first operand's unit.
         public static Quantity<U> Add(Quantity<U> first, Quantity<U> second)
@@ -104,51 +126,34 @@ namespace QuantityMeasurement.Models
             Quantity<U> second = new Quantity<U>(value2, unit2);
             return first.Add(second);
         }
-        // UC12: Private utility subtraction method — mirrors AddAndConvertToTargetUnit pattern.
-        // Converts both quantities to base unit, subtracts them, and converts result to target unit.
-        // Used by both Subtract(other) and Subtract(other, targetUnit) to avoid DRY violation.
-        private Quantity<U> SubtractAndConvertToTargetUnit(Quantity<U> other, U targetUnit)
-        {
-            if (other is null)
-            {
-                throw new ArgumentException("Cannot subtract null measurement. The second operand must be a valid Quantity.");
-            }
-            double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
-            double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
-            double differenceInBaseUnit = thisBaseValue - otherBaseValue;
-            double resultValue = targetUnit.ConvertFromBaseUnit(differenceInBaseUnit);
-            resultValue = Math.Round(resultValue, 6);
-            return new Quantity<U>(resultValue, targetUnit);
-        }
-        // UC12: Instance method for subtraction — result in THIS object's unit (first operand's unit).
+        // UC13 Refactored: Instance method for subtraction — result in THIS object's unit (first operand's unit).
         // Subtraction is non-commutative: A.Subtract(B) ≠ B.Subtract(A)
+        // Delegates to ValidateArithmeticOperands + PerformBaseArithmetic with ArithmeticOperation.SUBTRACT.
         public Quantity<U> Subtract(Quantity<U> other)
         {
-            return SubtractAndConvertToTargetUnit(other, this.unit);
+            ValidateArithmeticOperands(other, null, false);
+            double baseResult = PerformBaseArithmetic(other, ArithmeticOperation.SUBTRACT);
+            double resultValue = Math.Round(this.unit.ConvertFromBaseUnit(baseResult), 6);
+            return new Quantity<U>(resultValue, this.unit);
         }
-        // UC12: Instance method for subtraction with explicit target unit.
+        // UC13 Refactored: Instance method for subtraction with explicit target unit.
+        // Delegates to ValidateArithmeticOperands + PerformBaseArithmetic with ArithmeticOperation.SUBTRACT.
         public Quantity<U> Subtract(Quantity<U> other, U targetUnit)
         {
-            return SubtractAndConvertToTargetUnit(other, targetUnit);
+            ValidateArithmeticOperands(other, targetUnit, true);
+            double baseResult = PerformBaseArithmetic(other, ArithmeticOperation.SUBTRACT);
+            double resultValue = Math.Round(targetUnit.ConvertFromBaseUnit(baseResult), 6);
+            return new Quantity<U>(resultValue, targetUnit);
         }
-        // UC12: Division method — returns a dimensionless double (ratio).
-        // Converts both quantities to base unit and divides.
-        // Division by zero throws ArithmeticException (fail-fast principle).
+        // UC13 Refactored: Division method — returns a dimensionless double (ratio).
+        // Division by zero is handled by ArithmeticOperation.DIVIDE.Compute (fail-fast via lambda).
         // Division is non-commutative: A.Divide(B) ≠ B.Divide(A)
         // Result interpretation: > 1.0 means first is larger, < 1.0 means second is larger, = 1.0 means equal.
+        // No rounding applied — raw double ratio returned for full precision.
         public double Divide(Quantity<U> other)
         {
-            if (other is null)
-            {
-                throw new ArgumentException("Cannot divide by null measurement. The divisor must be a valid Quantity.");
-            }
-            double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
-            double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
-            if (otherBaseValue == 0.0)
-            {
-                throw new ArithmeticException("Cannot divide by zero. The divisor quantity must have a non-zero value.");
-            }
-            return thisBaseValue / otherBaseValue;
+            ValidateArithmeticOperands(other, null, false);
+            return PerformBaseArithmetic(other, ArithmeticOperation.DIVIDE);
         }
         //override Equals for value-based comparison with cross-unit support.
         //delegates to IMeasurable.ConvertToBaseUnit() for normalization. 

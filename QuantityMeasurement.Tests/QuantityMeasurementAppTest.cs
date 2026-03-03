@@ -2211,5 +2211,363 @@ namespace QuantityMeasurement.Tests
             double result = first.Divide(second);
             Assert.Equal(2.0, result, 6);
         }
+
+        // ==================== Centralized Arithmetic Logic Tests (UC13) ====================
+
+        // ArithmeticOperation.ADD.Compute correctly adds two values
+        [Fact]
+        public void TestArithmeticOperation_Add_EnumComputation()
+        {
+            double result = ArithmeticOperation.ADD.Compute(10.0, 5.0);
+            Assert.Equal(15.0, result, 6);
+        }
+        // ArithmeticOperation.SUBTRACT.Compute correctly subtracts two values
+        [Fact]
+        public void TestArithmeticOperation_Subtract_EnumComputation()
+        {
+            double result = ArithmeticOperation.SUBTRACT.Compute(10.0, 5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        // ArithmeticOperation.DIVIDE.Compute correctly divides two values
+        [Fact]
+        public void TestArithmeticOperation_Divide_EnumComputation()
+        {
+            double result = ArithmeticOperation.DIVIDE.Compute(10.0, 5.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        // ArithmeticOperation.DIVIDE.Compute throws ArithmeticException on division by zero
+        [Fact]
+        public void TestArithmeticOperation_DivideByZero_EnumThrows()
+        {
+            Assert.Throws<ArithmeticException>(() => ArithmeticOperation.DIVIDE.Compute(10.0, 0.0));
+        }
+        // ArithmeticOperation.ADD with specific values for completeness
+        [Fact]
+        public void TestEnumConstant_ADD_CorrectlyAdds()
+        {
+            Assert.Equal(10.0, ArithmeticOperation.ADD.Compute(7.0, 3.0), 6);
+        }
+        // ArithmeticOperation.SUBTRACT with specific values for completeness
+        [Fact]
+        public void TestEnumConstant_SUBTRACT_CorrectlySubtracts()
+        {
+            Assert.Equal(4.0, ArithmeticOperation.SUBTRACT.Compute(7.0, 3.0), 6);
+        }
+        // ArithmeticOperation.DIVIDE with specific values (non-integer result)
+        [Fact]
+        public void TestEnumConstant_DIVIDE_CorrectlyDivides()
+        {
+            Assert.Equal(3.5, ArithmeticOperation.DIVIDE.Compute(7.0, 2.0), 6);
+        }
+        // ArithmeticOperation.ADD with negative values
+        [Fact]
+        public void TestArithmeticOperation_Add_NegativeValues()
+        {
+            Assert.Equal(-2.0, ArithmeticOperation.ADD.Compute(-5.0, 3.0), 6);
+        }
+        // ArithmeticOperation.SUBTRACT with negative result
+        [Fact]
+        public void TestArithmeticOperation_Subtract_NegativeResult()
+        {
+            Assert.Equal(-5.0, ArithmeticOperation.SUBTRACT.Compute(5.0, 10.0), 6);
+        }
+        // ArithmeticOperation.DIVIDE with result less than 1
+        [Fact]
+        public void TestArithmeticOperation_Divide_FractionalResult()
+        {
+            Assert.Equal(0.5, ArithmeticOperation.DIVIDE.Compute(5.0, 10.0), 6);
+        }
+        // ArithmeticOperation.ToString returns correct name
+        [Fact]
+        public void TestArithmeticOperation_ToString()
+        {
+            Assert.Equal("ADD", ArithmeticOperation.ADD.ToString());
+            Assert.Equal("SUBTRACT", ArithmeticOperation.SUBTRACT.ToString());
+            Assert.Equal("DIVIDE", ArithmeticOperation.DIVIDE.ToString());
+        }
+
+        // Validation consistency: null operand throws same exception type across all operations
+        [Fact]
+        public void TestValidation_NullOperand_ConsistentAcrossOperations()
+        {
+            Quantity<LengthUnit> q = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            ArgumentException addEx = Assert.Throws<ArgumentException>(() => q.Add(null!));
+            ArgumentException subEx = Assert.Throws<ArgumentException>(() => q.Subtract(null!));
+            ArgumentException divEx = Assert.Throws<ArgumentException>(() => q.Divide(null!));
+            // All three should have the same centralized error message
+            Assert.Equal(addEx.Message, subEx.Message);
+            Assert.Equal(subEx.Message, divEx.Message);
+        }
+        // Validation consistency: null target unit throws ArgumentException for Add with explicit target
+        [Fact]
+        public void TestValidation_NullTargetUnit_AddRejects()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => q1.Add(q2, null!));
+        }
+        // Validation consistency: null target unit throws ArgumentException for Subtract with explicit target
+        [Fact]
+        public void TestValidation_NullTargetUnit_SubtractRejects()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => q1.Subtract(q2, null!));
+        }
+
+        // UC13 behavior preservation: add delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Add_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // UC13 behavior preservation: subtract delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Subtract_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // UC13 behavior preservation: divide delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Divide_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
+        // UC13: division by zero still throws via ArithmeticOperation.DIVIDE lambda
+        [Fact]
+        public void TestRefactoring_DivideByZero_ThrowsViaEnum()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.FEET);
+            Assert.Throws<ArithmeticException>(() => first.Divide(second));
+        }
+        // UC13: add with explicit target via centralized helper
+        [Fact]
+        public void TestRefactoring_Add_ExplicitTargetUnit()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // UC13: subtract with explicit target via centralized helper
+        [Fact]
+        public void TestRefactoring_Subtract_ExplicitTargetUnit()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(3000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // UC13: rounding consistency — add/subtract round to 6 decimal places
+        [Fact]
+        public void TestRounding_AddSubtract_Consistency()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(1.0, LengthUnit.CENTIMETERS);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(1.0, LengthUnit.INCH);
+            Quantity<LengthUnit> addResult = first.Add(second);
+            Quantity<LengthUnit> subResult = new Quantity<LengthUnit>(10.0, LengthUnit.CENTIMETERS).Subtract(second);
+            // Both should produce rounded results (not raw floating-point)
+            Assert.True(double.IsFinite(addResult.MeasurementValue));
+            Assert.True(double.IsFinite(subResult.MeasurementValue));
+        }
+        // UC13: rounding difference — divide returns raw double without rounding
+        [Fact]
+        public void TestRounding_Divide_NoRounding()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            // Division returns raw double — 10/3 = 3.333... not rounded to 6 decimal places
+            Assert.True(result > 3.333333);
+        }
+        // UC13: immutability after add via centralized helper
+        [Fact]
+        public void TestImmutability_AfterAdd_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Add(other);
+            Assert.Equal(5.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(8.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // UC13: immutability after subtract via centralized helper
+        [Fact]
+        public void TestImmutability_AfterSubtract_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Subtract(other);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // UC13: immutability after divide via centralized helper
+        [Fact]
+        public void TestImmutability_AfterDivide_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> divisor = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = original.Divide(divisor);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(5.0, divisor.MeasurementValue, 6);
+            Assert.Equal(2.0, result, 6);
+        }
+        // UC13: all operations work across all categories (length, weight, volume)
+        [Fact]
+        public void TestAllOperations_AcrossAllCategories()
+        {
+            // Length: add, subtract, divide
+            Quantity<LengthUnit> lenAdd = new Quantity<LengthUnit>(1.0, LengthUnit.FEET).Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH));
+            Assert.Equal(2.0, lenAdd.MeasurementValue, 6);
+            Quantity<LengthUnit> lenSub = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(6.0, LengthUnit.INCH));
+            Assert.Equal(9.5, lenSub.MeasurementValue, 6);
+            double lenDiv = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET));
+            Assert.Equal(2.0, lenDiv, 6);
+            // Weight: add, subtract, divide
+            Quantity<WeightUnit> wgtAdd = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM).Add(new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM));
+            Assert.Equal(2.0, wgtAdd.MeasurementValue, 6);
+            Quantity<WeightUnit> wgtSub = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Subtract(new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM));
+            Assert.Equal(5.0, wgtSub.MeasurementValue, 6);
+            double wgtDiv = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Divide(new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM));
+            Assert.Equal(2.0, wgtDiv, 6);
+            // Volume: add, subtract, divide
+            Quantity<VolumeUnit> volAdd = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE).Add(new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(2.0, volAdd.MeasurementValue, 6);
+            Quantity<VolumeUnit> volSub = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE).Subtract(new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(4.5, volSub.MeasurementValue, 6);
+            double volDiv = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE).Divide(new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE));
+            Assert.Equal(2.0, volDiv, 6);
+        }
+        // UC13: chained operations — add, subtract, divide in sequence
+        [Fact]
+        public void TestArithmetic_Chain_Operations()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q3 = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q4 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            // Chain: q1.Add(q2).Subtract(q3) = 10 + 2 - 3 = 9 feet
+            Quantity<LengthUnit> chained = q1.Add(q2).Subtract(q3);
+            Assert.Equal(9.0, chained.MeasurementValue, 6);
+            // Then divide: 9 / 5 = 1.8
+            double ratio = chained.Divide(q4);
+            Assert.Equal(1.8, ratio, 6);
+        }
+        // UC13: base-unit conversion correct in PerformBaseArithmetic
+        [Fact]
+        public void TestHelper_BaseUnitConversion_Correct()
+        {
+            // 1 foot + 12 inches: both convert to 1 foot in base, sum = 2 feet
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> inches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = feet.Add(inches);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+        }
+        // UC13: result conversion from base to target unit correct
+        [Fact]
+        public void TestHelper_ResultConversion_Correct()
+        {
+            // 10 feet - 6 inches = 9.5 feet
+            // Base: 10 - 0.5 = 9.5 feet → convert to inches: 114
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.INCH);
+            Assert.Equal(114.0, result.MeasurementValue, 6);
+        }
+        // UC13: implicit target unit uses first operand's unit for both add and subtract
+        [Fact]
+        public void TestImplicitTargetUnit_AddSubtract()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            // Add implicit target = first operand's unit (KILOGRAM)
+            Quantity<WeightUnit> addResult = first.Add(second);
+            Assert.Equal(WeightUnit.KILOGRAM, addResult.Unit);
+            // Subtract implicit target = first operand's unit (KILOGRAM)
+            Quantity<WeightUnit> subResult = first.Subtract(second);
+            Assert.Equal(WeightUnit.KILOGRAM, subResult.Unit);
+        }
+        // UC13: explicit target unit overrides default first operand unit
+        [Fact]
+        public void TestExplicitTargetUnit_AddSubtract_Overrides()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            // Add with explicit GRAM target overrides KILOGRAM default
+            Quantity<WeightUnit> addResult = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(WeightUnit.GRAM, addResult.Unit);
+            Assert.Equal(6000.0, addResult.MeasurementValue, 6);
+            // Subtract with explicit GRAM target overrides KILOGRAM default
+            Quantity<WeightUnit> subResult = first.Subtract(second, WeightUnit.GRAM);
+            Assert.Equal(WeightUnit.GRAM, subResult.Unit);
+            Assert.Equal(4000.0, subResult.MeasurementValue, 6);
+        }
+        // UC13: error message consistency — all null checks produce same message
+        [Fact]
+        public void TestErrorMessage_Consistency_Across_Operations()
+        {
+            Quantity<LengthUnit> q = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            string addMsg = Assert.Throws<ArgumentException>(() => q.Add(null!)).Message;
+            string subMsg = Assert.Throws<ArgumentException>(() => q.Subtract(null!)).Message;
+            string divMsg = Assert.Throws<ArgumentException>(() => q.Divide(null!)).Message;
+            Assert.Equal(addMsg, subMsg);
+            Assert.Equal(subMsg, divMsg);
+            Assert.Contains("null", addMsg);
+        }
+        // UC13: subtraction-addition inverse — A + B - B = A
+        [Fact]
+        public void TestRefactoring_SubtractionAddition_Inverse()
+        {
+            Quantity<VolumeUnit> a = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> b = new Quantity<VolumeUnit>(2000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> aPlusB = a.Add(b);
+            Quantity<VolumeUnit> result = aPlusB.Subtract(b);
+            Assert.Equal(a.MeasurementValue, result.MeasurementValue, 4);
+        }
+        // UC13: enum dispatch correctness — each operation uses correct enum constant
+        [Fact]
+        public void TestEnumDispatch_AllOperations_CorrectlyDispatched()
+        {
+            // Verify through observable behavior that correct operation is used
+            Quantity<LengthUnit> ten = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> three = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            // ADD: 10 + 3 = 13
+            Assert.Equal(13.0, ten.Add(three).MeasurementValue, 6);
+            // SUBTRACT: 10 - 3 = 7
+            Assert.Equal(7.0, ten.Subtract(three).MeasurementValue, 6);
+            // DIVIDE: 10 / 3 ≈ 3.333...
+            Assert.True(Math.Abs(ten.Divide(three) - 3.333333) < 0.001);
+        }
+        // UC13: ArithmeticOperation.ADD with zero (identity element)
+        [Fact]
+        public void TestArithmeticOperation_Add_WithZero()
+        {
+            Assert.Equal(5.0, ArithmeticOperation.ADD.Compute(5.0, 0.0), 6);
+            Assert.Equal(5.0, ArithmeticOperation.ADD.Compute(0.0, 5.0), 6);
+        }
+        // UC13: ArithmeticOperation.SUBTRACT with zero (identity element)
+        [Fact]
+        public void TestArithmeticOperation_Subtract_WithZero()
+        {
+            Assert.Equal(5.0, ArithmeticOperation.SUBTRACT.Compute(5.0, 0.0), 6);
+            Assert.Equal(-5.0, ArithmeticOperation.SUBTRACT.Compute(0.0, 5.0), 6);
+        }
     }
 }

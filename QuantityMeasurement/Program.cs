@@ -113,7 +113,7 @@ namespace QuantityMeasurement
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC12: Subtraction & Division");
+            Console.WriteLine("   UC13: Centralized Arithmetic Logic");
             Console.WriteLine("========================================");
             Console.WriteLine();
 
