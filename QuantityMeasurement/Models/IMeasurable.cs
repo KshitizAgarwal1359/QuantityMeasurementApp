@@ -20,5 +20,17 @@ namespace QuantityMeasurement.Models
         //used by Quantity&lt;U&gt;.ToString() for readable output.
         //example: "feet", "inch", "kg", "g"
         string GetUnitName();
+        // UC14: Default method indicating whether this unit supports arithmetic operations.
+        // Returns true by default — existing units (LengthUnit, WeightUnit, VolumeUnit) inherit this.
+        // TemperatureUnit overrides to return false, indicating arithmetic is not meaningful.
+        // This is the C# equivalent of Java's SupportsArithmetic functional interface with lambda () -> true
+        // Func<bool> supportsArithmetic = () => true; pattern is applied via default interface method.
+        bool SupportsArithmetic() => true;
+        // UC14: Default method to validate arithmetic operation support.
+        // Does nothing by default — existing units support all operations, so no validation needed.
+        // TemperatureUnit overrides to throw InvalidOperationException for unsupported operations.
+        // Subclasses like TemperatureUnit can override to provide clear error messages when
+        // operations like addition, subtraction, or division are not meaningful.
+        void ValidateOperationSupport(string operation) { }
     }
 }

@@ -76,8 +76,15 @@ namespace QuantityMeasurement.Models
         // Returns the raw double result in base-unit terms.
         // For Add/Subtract, callers convert the result to the target unit.
         // For Divide, callers return the raw dimensionless ratio directly.
+        // UC14: Validates operation support BEFORE performing arithmetic — TemperatureUnit throws
+        // InvalidOperationException here, preventing meaningless temperature arithmetic.
         private double PerformBaseArithmetic(Quantity<U> other, ArithmeticOperation operation)
         {
+            // UC14: Check if this unit supports arithmetic operations before proceeding
+            // For LengthUnit/WeightUnit/VolumeUnit, ValidateOperationSupport does nothing (default)
+            // For TemperatureUnit, it throws InvalidOperationException with clear message
+            // Cast to IMeasurable required for C# default interface method dispatch
+            ((IMeasurable)this.unit).ValidateOperationSupport(operation.ToString());
             double thisBaseValue = this.unit.ConvertToBaseUnit(this.measurementValue);
             double otherBaseValue = other.unit.ConvertToBaseUnit(other.measurementValue);
             return operation.Compute(thisBaseValue, otherBaseValue);

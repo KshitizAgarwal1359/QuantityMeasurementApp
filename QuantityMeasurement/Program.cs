@@ -113,7 +113,7 @@ namespace QuantityMeasurement
         {
             Console.WriteLine("========================================");
             Console.WriteLine("   Quantity Measurement Application");
-            Console.WriteLine("   UC13: Centralized Arithmetic Logic");
+            Console.WriteLine("   UC14: Temperature Measurement");
             Console.WriteLine("========================================");
             Console.WriteLine();
 
@@ -210,6 +210,79 @@ namespace QuantityMeasurement
             DemonstrateDivision(24.0, LengthUnit.INCH, 2.0, LengthUnit.FEET);
             DemonstrateDivision(10.0, WeightUnit.KILOGRAM, 5.0, WeightUnit.KILOGRAM);
             DemonstrateDivision(5.0, VolumeUnit.LITRE, 10.0, VolumeUnit.LITRE);
+            // UC14: Temperature Equality — using SAME generic DemonstrateComparison
+            Console.WriteLine("--- Temperature Equality (UC14 via Generic) ---");
+            Console.WriteLine();
+            DemonstrateComparison(0.0, TemperatureUnit.CELSIUS, 0.0, TemperatureUnit.CELSIUS);
+            DemonstrateComparison(100.0, TemperatureUnit.CELSIUS, 212.0, TemperatureUnit.FAHRENHEIT);
+            DemonstrateComparison(0.0, TemperatureUnit.CELSIUS, 32.0, TemperatureUnit.FAHRENHEIT);
+            DemonstrateComparison(-40.0, TemperatureUnit.CELSIUS, -40.0, TemperatureUnit.FAHRENHEIT);
+            // UC14: Temperature Conversion — using SAME generic DemonstrateConversion
+            Console.WriteLine("--- Temperature Conversion (UC14 via Generic) ---");
+            Console.WriteLine();
+            DemonstrateConversion(100.0, TemperatureUnit.CELSIUS, TemperatureUnit.FAHRENHEIT);
+            DemonstrateConversion(32.0, TemperatureUnit.FAHRENHEIT, TemperatureUnit.CELSIUS);
+            DemonstrateConversion(-40.0, TemperatureUnit.CELSIUS, TemperatureUnit.FAHRENHEIT);
+            // UC14: Temperature Cross-Category Safety
+            Console.WriteLine("--- Temperature Cross-Category Safety (UC14) ---");
+            Console.WriteLine();
+            QuantityTemperature hundredCelsius = new QuantityTemperature(100.0, TemperatureUnit.CELSIUS);
+            bool tempVsLength = hundredCelsius.Equals(oneFoot);
+            Console.WriteLine($"Comparing {hundredCelsius} (temperature) and {oneFoot} (length)");
+            Console.WriteLine($"Result: Equal ({tempVsLength})");
+            Console.WriteLine();
+            bool tempVsWeight = hundredCelsius.Equals(oneKg);
+            Console.WriteLine($"Comparing {hundredCelsius} (temperature) and {oneKg} (weight)");
+            Console.WriteLine($"Result: Equal ({tempVsWeight})");
+            Console.WriteLine();
+            bool tempVsVolume = hundredCelsius.Equals(oneLitre);
+            Console.WriteLine($"Comparing {hundredCelsius} (temperature) and {oneLitre} (volume)");
+            Console.WriteLine($"Result: Equal ({tempVsVolume})");
+            Console.WriteLine();
+            // UC14: Temperature Unsupported Operations — demonstrating error handling
+            Console.WriteLine("--- Temperature Unsupported Operations (UC14) ---");
+            Console.WriteLine();
+            QuantityTemperature temp1 = new QuantityTemperature(100.0, TemperatureUnit.CELSIUS);
+            QuantityTemperature temp2 = new QuantityTemperature(50.0, TemperatureUnit.CELSIUS);
+            try
+            {
+                temp1.Add(temp2);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"Temperature Add Attempt: {ex.Message}");
+                Console.WriteLine();
+            }
+            try
+            {
+                temp1.Subtract(temp2);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"Temperature Subtract Attempt: {ex.Message}");
+                Console.WriteLine();
+            }
+            try
+            {
+                temp1.Divide(temp2);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"Temperature Divide Attempt: {ex.Message}");
+                Console.WriteLine();
+            }
+            // UC14: Operation support methods demonstration
+            // Note: Default interface methods in C# must be called through the interface type.
+            // LengthUnit/WeightUnit/VolumeUnit inherit the default SupportsArithmetic() → true from IMeasurable.
+            // TemperatureUnit explicitly overrides SupportsArithmetic() → false.
+            Console.WriteLine("--- Operation Support Methods (UC14) ---");
+            Console.WriteLine();
+            Console.WriteLine($"LengthUnit.FEET.SupportsArithmetic(): {((IMeasurable)LengthUnit.FEET).SupportsArithmetic()}");
+            Console.WriteLine($"WeightUnit.KILOGRAM.SupportsArithmetic(): {((IMeasurable)WeightUnit.KILOGRAM).SupportsArithmetic()}");
+            Console.WriteLine($"VolumeUnit.LITRE.SupportsArithmetic(): {((IMeasurable)VolumeUnit.LITRE).SupportsArithmetic()}");
+            Console.WriteLine($"TemperatureUnit.CELSIUS.SupportsArithmetic(): {TemperatureUnit.CELSIUS.SupportsArithmetic()}");
+            Console.WriteLine($"TemperatureUnit.FAHRENHEIT.SupportsArithmetic(): {TemperatureUnit.FAHRENHEIT.SupportsArithmetic()}");
+            Console.WriteLine();
             Console.WriteLine("========================================");
             Console.WriteLine("   All Operations Complete");
             Console.WriteLine("========================================");
