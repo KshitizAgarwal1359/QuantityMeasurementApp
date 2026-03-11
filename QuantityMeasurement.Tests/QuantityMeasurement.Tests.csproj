@@ -15,6 +15,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\QuantityMeasurement\QuantityMeasurement.csproj" />
+    <ProjectReference Include="..\QuantityMeasurement.Models\QuantityMeasurement.Models.csproj" />
+    <ProjectReference Include="..\QuantityMeasurement.Repository\QuantityMeasurement.Repository.csproj" />
+    <ProjectReference Include="..\QuantityMeasurement.Service\QuantityMeasurement.Service.csproj" />
+    <ProjectReference Include="..\QuantityMeasurement.Controllers\QuantityMeasurement.Controllers.csproj" />
   </ItemGroup>
 </Project>

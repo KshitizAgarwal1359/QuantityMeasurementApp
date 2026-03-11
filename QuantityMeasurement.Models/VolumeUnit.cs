@@ -56,6 +56,11 @@ namespace QuantityMeasurement.Models
         {
             return this.unitLabel;
         }
+        // UC15: Returns measurement type category
+        public string GetMeasurementType()
+        {
+            return "VOLUME";
+        }
         //Returns the enum-style name for backward compatibility and console output.
         public override string ToString()
         {

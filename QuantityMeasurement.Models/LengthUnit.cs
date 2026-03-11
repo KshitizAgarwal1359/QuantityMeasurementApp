@@ -53,6 +53,11 @@ namespace QuantityMeasurement.Models
         {
             return this.unitLabel;
         }
+        // UC15: Returns measurement type category
+        public string GetMeasurementType()
+        {
+            return "LENGTH";
+        }
         //Returns the enum-style name (e.g., "FEET", "INCH") for backward compatibility with console output and debugging.
         public override string ToString()
         {

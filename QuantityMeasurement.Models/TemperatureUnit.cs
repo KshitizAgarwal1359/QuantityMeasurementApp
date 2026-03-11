@@ -81,6 +81,11 @@ namespace QuantityMeasurement.Models
         {
             return this.unitLabel;
         }
+        // UC15: Returns measurement type category
+        public string GetMeasurementType()
+        {
+            return "TEMPERATURE";
+        }
 
         // UC14: Override — TemperatureUnit does NOT support arithmetic operations
         // Returns false via the stored lambda expression: () => false

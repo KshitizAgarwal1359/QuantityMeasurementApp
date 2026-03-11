@@ -46,6 +46,11 @@ namespace QuantityMeasurement.Models
         {
             return this.unitLabel;
         }
+        // UC15: Returns measurement type category
+        public string GetMeasurementType()
+        {
+            return "WEIGHT";
+        }
         //returns the enum-style name for backward compatibility.
         public override string ToString()
         {

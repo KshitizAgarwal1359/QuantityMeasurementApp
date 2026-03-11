@@ -30,3 +30,6 @@ x86/
 
 # Test results
 TestResults/
+
+# UC15: Repository persistence file
+quantity_measurements.json

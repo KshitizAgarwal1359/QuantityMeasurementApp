@@ -1,5 +1,8 @@
 using QuantityMeasurement.Models;
 using QuantityMeasurement.Services;
+using QuantityMeasurement.Service;
+using QuantityMeasurement.Repository;
+using QuantityMeasurement.Controllers;
 namespace QuantityMeasurement.Tests
 {
     public class QuantityMeasurementAppTest
@@ -2949,6 +2952,430 @@ namespace QuantityMeasurement.Tests
             Assert.Equal(5.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)).MeasurementValue, 6);
             // UC12: Division
             Assert.Equal(2.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)), 6);
+        }
+
+        // ==================== N-Tier Architecture Tests (UC15) ====================
+
+        // ---- QuantityDTO Tests ----
+
+        // QuantityDTO: construction stores value, unitName, measurementType
+        [Fact]
+        public void TestQuantityDTO_Construction()
+        {
+            QuantityDTO dto = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            Assert.Equal(100.0, dto.Value);
+            Assert.Equal("CELSIUS", dto.UnitName);
+            Assert.Equal("TEMPERATURE", dto.MeasurementType);
+        }
+        // QuantityDTO: toString format
+        [Fact]
+        public void TestQuantityDTO_ToString()
+        {
+            QuantityDTO dto = new QuantityDTO(1.0, "FEET", "LENGTH");
+            Assert.Equal("1 FEET (LENGTH)", dto.ToString());
+        }
+
+        // ---- QuantityModel Tests ----
+
+        // QuantityModel: construction stores value and unit
+        [Fact]
+        public void TestQuantityModel_Construction()
+        {
+            QuantityModel<LengthUnit> model = new QuantityModel<LengthUnit>(1.0, LengthUnit.FEET);
+            Assert.Equal(1.0, model.Value);
+            Assert.Equal(LengthUnit.FEET, model.Unit);
+        }
+        // QuantityModel: toString format
+        [Fact]
+        public void TestQuantityModel_ToString()
+        {
+            QuantityModel<WeightUnit> model = new QuantityModel<WeightUnit>(10.0, WeightUnit.KILOGRAM);
+            Assert.Equal("10 kg", model.ToString());
+        }
+
+        // ---- QuantityMeasurementEntity Tests ----
+
+        // Entity: single-operand construction (conversion)
+        [Fact]
+        public void TestQuantityEntity_SingleOperandConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "CONVERT", "100 CELSIUS", "FAHRENHEIT", "212");
+            Assert.Equal("CONVERT", entity.OperationType);
+            Assert.Equal("100 CELSIUS", entity.Operand1);
+            Assert.Null(entity.Operand2);
+            Assert.Equal("FAHRENHEIT", entity.TargetUnit);
+            Assert.Equal("212", entity.Result);
+            Assert.False(entity.HasError);
+        }
+        // Entity: binary-operand construction (addition)
+        [Fact]
+        public void TestQuantityEntity_BinaryOperandConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+            Assert.Equal("ADD", entity.OperationType);
+            Assert.Equal("1 FEET", entity.Operand1);
+            Assert.Equal("12 INCH", entity.Operand2);
+            Assert.Equal("FEET", entity.TargetUnit);
+            Assert.Equal("2", entity.Result);
+            Assert.False(entity.HasError);
+        }
+        // Entity: error construction
+        [Fact]
+        public void TestQuantityEntity_ErrorConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "COMPARE", "Cross-category not allowed");
+            Assert.Equal("COMPARE", entity.OperationType);
+            Assert.True(entity.HasError);
+            Assert.Equal("Cross-category not allowed", entity.ErrorMessage);
+        }
+        // Entity: toString for success
+        [Fact]
+        public void TestQuantityEntity_ToString_Success()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "CONVERT", "100 CELSIUS", "FAHRENHEIT", "212");
+            Assert.Contains("CONVERT", entity.ToString());
+            Assert.Contains("100 CELSIUS", entity.ToString());
+        }
+        // Entity: toString for error
+        [Fact]
+        public void TestQuantityEntity_ToString_Error()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "DIVIDE", "Division by zero");
+            Assert.Contains("ERROR", entity.ToString());
+            Assert.Contains("Division by zero", entity.ToString());
+        }
+
+        // ---- Repository Tests ----
+
+        // Repository: singleton returns same instance
+        [Fact]
+        public void TestRepository_SingletonPattern()
+        {
+            IQuantityMeasurementRepository repo1 = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementRepository repo2 = QuantityMeasurementCacheRepository.GetInstance();
+            Assert.Same(repo1, repo2);
+        }
+        // Repository: save and retrieve
+        [Fact]
+        public void TestRepository_SaveAndRetrieve()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            int initialCount = repo.GetCount();
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "TEST", "test operand", "test target", "test result");
+            repo.Save(entity);
+            Assert.True(repo.GetCount() > initialCount);
+        }
+        // Repository: null entity rejected
+        [Fact]
+        public void TestRepository_NullEntityRejected()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            Assert.Throws<ArgumentNullException>(() => repo.Save(null!));
+        }
+
+        // ---- Service Layer Tests ----
+
+        // Service: compare equality same unit success
+        [Fact]
+        public void TestService_CompareEquality_SameUnit_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Compare(first, second);
+            Assert.Equal(1.0, result.Value); // 1.0 means equal
+        }
+        // Service: compare equality cross-unit success
+        [Fact]
+        public void TestService_CompareEquality_DifferentUnit_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
+            QuantityDTO result = svc.Compare(first, second);
+            Assert.Equal(1.0, result.Value);
+        }
+        // Service: compare equality cross-category error
+        [Fact]
+        public void TestService_CompareEquality_CrossCategory_Error()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO length = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO weight = new QuantityDTO(1.0, "KILOGRAM", "WEIGHT");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Compare(length, weight));
+        }
+        // Service: convert success
+        [Fact]
+        public void TestService_Convert_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO source = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Convert(source, "INCH");
+            Assert.Equal(12.0, result.Value, 4);
+            Assert.Equal("INCH", result.UnitName);
+        }
+        // Service: add success
+        [Fact]
+        public void TestService_Add_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
+            QuantityDTO result = svc.Add(first, second, "FEET");
+            Assert.Equal(2.0, result.Value, 4);
+        }
+        // Service: add temperature unsupported
+        [Fact]
+        public void TestService_Add_UnsupportedOperation_Error()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO t1 = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            QuantityDTO t2 = new QuantityDTO(50.0, "CELSIUS", "TEMPERATURE");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Add(t1, t2, "CELSIUS"));
+        }
+        // Service: subtract success
+        [Fact]
+        public void TestService_Subtract_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Subtract(first, second, "FEET");
+            Assert.Equal(5.0, result.Value, 4);
+        }
+        // Service: divide success
+        [Fact]
+        public void TestService_Divide_Success()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Divide(first, second);
+            Assert.Equal(2.0, result.Value, 4);
+        }
+        // Service: divide by zero error
+        [Fact]
+        public void TestService_Divide_ByZero_Error()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(0.0, "FEET", "LENGTH");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Divide(first, second));
+        }
+        // Service: null entity rejected
+        [Fact]
+        public void TestService_NullEntity_Rejection()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            Assert.Throws<QuantityMeasurementException>(() => svc.Compare(null!, new QuantityDTO(1.0, "FEET", "LENGTH")));
+        }
+        // Service: unknown unit error
+        [Fact]
+        public void TestService_UnknownUnit_Error()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO dto = new QuantityDTO(1.0, "INVALID_UNIT", "LENGTH");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Convert(dto, "FEET"));
+        }
+        // Service: null repository rejection
+        [Fact]
+        public void TestService_NullRepository_Rejection()
+        {
+            Assert.Throws<ArgumentNullException>(() => new QuantityMeasurementServiceImpl(null!));
+        }
+        // Service: all measurement categories work
+        [Fact]
+        public void TestService_AllMeasurementCategories()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            // Length
+            Assert.Equal(12.0, svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH").Value, 4);
+            // Weight
+            Assert.Equal(1000.0, svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM").Value, 4);
+            // Volume
+            Assert.Equal(1000.0, svc.Convert(new QuantityDTO(1.0, "LITRE", "VOLUME"), "MILLILITRE").Value, 4);
+            // Temperature
+            Assert.Equal(212.0, svc.Convert(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"), "FAHRENHEIT").Value, 4);
+        }
+        // Service: temperature conversion works but arithmetic doesn't
+        [Fact]
+        public void TestService_TemperatureConversionSucceeds_ArithmeticFails()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            // Conversion works
+            QuantityDTO converted = svc.Convert(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"), "FAHRENHEIT");
+            Assert.Equal(212.0, converted.Value, 4);
+            // Arithmetic fails
+            Assert.Throws<QuantityMeasurementException>(() =>
+                svc.Add(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"),
+                    new QuantityDTO(50.0, "CELSIUS", "TEMPERATURE"), "CELSIUS"));
+        }
+
+        // ---- Controller Layer Tests ----
+
+        // Controller: null service rejection
+        [Fact]
+        public void TestController_NullService_Prevention()
+        {
+            Assert.Throws<ArgumentNullException>(() => new QuantityMeasurementController(null!));
+        }
+
+        // ---- IMeasurable Helper Methods Tests ----
+
+        // GetMeasurementType: all unit classes
+        [Fact]
+        public void TestIMeasurable_GetMeasurementType()
+        {
+            Assert.Equal("LENGTH", LengthUnit.FEET.GetMeasurementType());
+            Assert.Equal("WEIGHT", WeightUnit.KILOGRAM.GetMeasurementType());
+            Assert.Equal("VOLUME", VolumeUnit.LITRE.GetMeasurementType());
+            Assert.Equal("TEMPERATURE", TemperatureUnit.CELSIUS.GetMeasurementType());
+        }
+        // GetUnitByName: all units resolve correctly
+        [Fact]
+        public void TestIMeasurable_GetUnitByName()
+        {
+            Assert.Equal(LengthUnit.FEET, IMeasurable.GetUnitByName("FEET"));
+            Assert.Equal(LengthUnit.INCH, IMeasurable.GetUnitByName("INCH"));
+            Assert.Equal(WeightUnit.KILOGRAM, IMeasurable.GetUnitByName("KILOGRAM"));
+            Assert.Equal(VolumeUnit.LITRE, IMeasurable.GetUnitByName("LITRE"));
+            Assert.Equal(TemperatureUnit.CELSIUS, IMeasurable.GetUnitByName("CELSIUS"));
+        }
+        // GetUnitByName: unknown unit returns null
+        [Fact]
+        public void TestIMeasurable_GetUnitByName_Unknown()
+        {
+            Assert.Null(IMeasurable.GetUnitByName("UNKNOWN_UNIT"));
+        }
+        // GetUnitByName: case-insensitive lookup
+        [Fact]
+        public void TestIMeasurable_GetUnitByName_CaseInsensitive()
+        {
+            Assert.Equal(LengthUnit.FEET, IMeasurable.GetUnitByName("feet"));
+            Assert.Equal(WeightUnit.GRAM, IMeasurable.GetUnitByName("gram"));
+        }
+
+        // ---- Layer Separation Tests ----
+
+        // Service can be tested independently without controller
+        [Fact]
+        public void TestLayerSeparation_ServiceIndependence()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO result = svc.Compare(
+                new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"),
+                new QuantityDTO(1000.0, "GRAM", "WEIGHT"));
+            Assert.Equal(1.0, result.Value);
+        }
+
+        // ---- Backward Compatibility ----
+
+        // All UC1-UC14 operations unchanged after N-Tier refactoring
+        [Fact]
+        public void TestBackwardCompatibility_AllUC1_UC14_Tests()
+        {
+            // UC1-UC4: Direct Quantity comparison still works
+            Assert.True(new Quantity<LengthUnit>(1.0, LengthUnit.FEET)
+                .Equals(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)));
+            // UC5: Conversion still works
+            Assert.Equal(12.0, Quantity<LengthUnit>.Convert(1.0, LengthUnit.FEET, LengthUnit.INCH), 6);
+            // UC6/UC7: Addition still works
+            Assert.Equal(2.0, new Quantity<LengthUnit>(1.0, LengthUnit.FEET)
+                .Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)).MeasurementValue, 6);
+            // UC12: Subtraction/Division still works
+            Assert.Equal(5.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Subtract(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)).MeasurementValue, 6);
+            Assert.Equal(2.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)), 6);
+            // UC14: Temperature conversion still works
+            Assert.Equal(212.0, new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS)
+                .ConvertTo(TemperatureUnit.FAHRENHEIT).MeasurementValue, 4);
+        }
+
+        // ---- Custom Exception Tests ----
+
+        // QuantityMeasurementException: message constructor
+        [Fact]
+        public void TestQuantityMeasurementException_Message()
+        {
+            QuantityMeasurementException ex = new QuantityMeasurementException("test error");
+            Assert.Equal("test error", ex.Message);
+        }
+        // QuantityMeasurementException: message + inner exception
+        [Fact]
+        public void TestQuantityMeasurementException_WithInnerException()
+        {
+            Exception inner = new InvalidOperationException("inner");
+            QuantityMeasurementException ex = new QuantityMeasurementException("outer", inner);
+            Assert.Equal("outer", ex.Message);
+            Assert.Equal(inner, ex.InnerException);
+        }
+
+        // ---- Entity Immutability Test ----
+
+        // Entity: properties are init-only (immutable after construction)
+        [Fact]
+        public void TestEntity_Immutability()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+            // Verify properties are accessible and contain expected values
+            Assert.Equal("ADD", entity.OperationType);
+            Assert.Equal("1 FEET", entity.Operand1);
+            Assert.Equal("12 INCH", entity.Operand2);
+            Assert.False(entity.HasError);
+        }
+
+        // ---- Data Flow Tests ----
+
+        // Data flows correctly from service to result
+        [Fact]
+        public void TestDataFlow_ControllerToService()
+        {
+            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO input = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            QuantityDTO result = svc.Convert(input, "FAHRENHEIT");
+            Assert.Equal(212.0, result.Value, 4);
+            Assert.Equal("FAHRENHEIT", result.UnitName);
+            Assert.Equal("TEMPERATURE", result.MeasurementType);
+        }
+
+        // Entity operation type tracking
+        [Fact]
+        public void TestEntity_OperationType_Tracking()
+        {
+            QuantityMeasurementEntity compareEntity = new QuantityMeasurementEntity(
+                "COMPARE", "1 FEET", "1 FEET", null, "True");
+            Assert.Equal("COMPARE", compareEntity.OperationType);
+
+            QuantityMeasurementEntity convertEntity = new QuantityMeasurementEntity(
+                "CONVERT", "1 FEET", "INCH", "12");
+            Assert.Equal("CONVERT", convertEntity.OperationType);
+
+            QuantityMeasurementEntity addEntity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+            Assert.Equal("ADD", addEntity.OperationType);
         }
     }
 }
