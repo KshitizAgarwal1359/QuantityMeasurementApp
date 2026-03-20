@@ -28,9 +28,9 @@ namespace QuantityMeasurement.Models
             this.unit = unit;
         }
         //gets the measurement value
-        public double MeasurementValue => this.measurementValue;
+        public double MeasurementValue { get { return this.measurementValue; } }
         //gets the unit type
-        public U Unit => this.unit;
+        public U Unit { get { return this.unit; } }
         //instance method for unit conversion.
         //delegates to IMeasurable.ConvertToBaseUnit() and IMeasurable.ConvertFromBaseUnit().
         //returns a NEW Quantity&lt;U&gt; instance (preserving immutability).

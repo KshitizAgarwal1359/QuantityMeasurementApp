@@ -9,7 +9,7 @@ namespace QuantityMeasurement.Models
         {
             this.measurementValue = measurementValue;
         }
-        public double MeasurementValue => this.measurementValue;
+        public double MeasurementValue { get { return this.measurementValue; } }
         // Override Equals for value-based comparison
         // 1. Reference Check: same object returns true
         // 2. Null Check: null returns false

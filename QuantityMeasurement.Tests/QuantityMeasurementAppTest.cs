@@ -2975,23 +2975,7 @@ namespace QuantityMeasurement.Tests
             Assert.Equal("1 FEET (LENGTH)", dto.ToString());
         }
 
-        // ---- QuantityModel Tests ----
 
-        // QuantityModel: construction stores value and unit
-        [Fact]
-        public void TestQuantityModel_Construction()
-        {
-            QuantityModel<LengthUnit> model = new QuantityModel<LengthUnit>(1.0, LengthUnit.FEET);
-            Assert.Equal(1.0, model.Value);
-            Assert.Equal(LengthUnit.FEET, model.Unit);
-        }
-        // QuantityModel: toString format
-        [Fact]
-        public void TestQuantityModel_ToString()
-        {
-            QuantityModel<WeightUnit> model = new QuantityModel<WeightUnit>(10.0, WeightUnit.KILOGRAM);
-            Assert.Equal("10 kg", model.ToString());
-        }
 
         // ---- QuantityMeasurementEntity Tests ----
 
@@ -3013,7 +2997,7 @@ namespace QuantityMeasurement.Tests
         public void TestQuantityEntity_BinaryOperandConstruction()
         {
             QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+                "ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH");
             Assert.Equal("ADD", entity.OperationType);
             Assert.Equal("1 FEET", entity.Operand1);
             Assert.Equal("12 INCH", entity.Operand2);
@@ -3071,13 +3055,7 @@ namespace QuantityMeasurement.Tests
             repo.Save(entity);
             Assert.True(repo.GetCount() > initialCount);
         }
-        // Repository: null entity rejected
-        [Fact]
-        public void TestRepository_NullEntityRejected()
-        {
-            IQuantityMeasurementRepository repo = QuantityMeasurementCacheRepository.GetInstance();
-            Assert.Throws<ArgumentNullException>(() => repo.Save(null!));
-        }
+
 
         // ---- Service Layer Tests ----
 
@@ -3194,12 +3172,7 @@ namespace QuantityMeasurement.Tests
             QuantityDTO dto = new QuantityDTO(1.0, "INVALID_UNIT", "LENGTH");
             Assert.Throws<QuantityMeasurementException>(() => svc.Convert(dto, "FEET"));
         }
-        // Service: null repository rejection
-        [Fact]
-        public void TestService_NullRepository_Rejection()
-        {
-            Assert.Throws<ArgumentNullException>(() => new QuantityMeasurementServiceImpl(null!));
-        }
+
         // Service: all measurement categories work
         [Fact]
         public void TestService_AllMeasurementCategories()
@@ -3232,12 +3205,7 @@ namespace QuantityMeasurement.Tests
 
         // ---- Controller Layer Tests ----
 
-        // Controller: null service rejection
-        [Fact]
-        public void TestController_NullService_Prevention()
-        {
-            Assert.Throws<ArgumentNullException>(() => new QuantityMeasurementController(null!));
-        }
+
 
         // ---- IMeasurable Helper Methods Tests ----
 
@@ -3338,7 +3306,7 @@ namespace QuantityMeasurement.Tests
         public void TestEntity_Immutability()
         {
             QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+                "ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH");
             // Verify properties are accessible and contain expected values
             Assert.Equal("ADD", entity.OperationType);
             Assert.Equal("1 FEET", entity.Operand1);

@@ -3,22 +3,7 @@ using QuantityMeasurement.Models;
 
 namespace QuantityMeasurement.Repository
 {
-    // UC15: QuantityMeasurementCacheRepository — Singleton in-memory cache repository.
-    // Implements IQuantityMeasurementRepository for storing QuantityMeasurementEntity objects.
-    //
-    // Singleton Design Pattern ensures:
-    //   - Single instance throughout the application lifecycle
-    //   - Centralized data storage — all components access the same data
-    //   - Resource efficiency — no duplicate instances
-    //   - Thread-safe via static readonly initialization (lazy by CLR)
-    //
-    // Persistence: Serializes entities to a JSON file on disk using System.Text.Json.
-    //   - SaveToDisk: appends new entities to the file
-    //   - LoadFromDisk: reads existing entities when the repository is initialized
-    //   This ensures data is not lost across application restarts.
-    //
-    // The List<QuantityMeasurementEntity> serves as the in-memory cache,
-    // providing fast access without database overhead.
+    // Singleton in-memory cache repository.
     public sealed class QuantityMeasurementCacheRepository : IQuantityMeasurementRepository
     {
         // Singleton instance — thread-safe via static readonly initialization
@@ -43,14 +28,8 @@ namespace QuantityMeasurement.Repository
             return instance;
         }
 
-        // Saves a QuantityMeasurementEntity to the in-memory cache and persists to disk.
-        // Returns the saved entity for confirmation.
         public QuantityMeasurementEntity Save(QuantityMeasurementEntity entity)
         {
-            if (entity is null)
-            {
-                throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
-            }
             cache.Add(entity);
             SaveToDisk(entity);
             return entity;
@@ -64,6 +43,24 @@ namespace QuantityMeasurement.Repository
 
         // Returns the count of cached measurements.
         public int GetCount()
+        {
+            return cache.Count;
+        }
+
+        public List<QuantityMeasurementEntity> GetMeasurementsByOperation(string operationType)
+        {
+            List<QuantityMeasurementEntity> result = new List<QuantityMeasurementEntity>();
+            foreach (QuantityMeasurementEntity e in cache)
+            {
+                if (e.OperationType.Equals(operationType, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Add(e);
+                }
+            }
+            return result;
+        }
+
+        public int GetTotalCount()
         {
             return cache.Count;
         }

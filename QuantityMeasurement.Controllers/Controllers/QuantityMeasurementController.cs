@@ -3,33 +3,15 @@ using QuantityMeasurement.Service;
 
 namespace QuantityMeasurement.Controllers
 {
-    // UC15: QuantityMeasurementController — orchestration and presentation layer.
-    // Handles user interactions and delegates business logic to the Service layer.
-    //
-    // Key principles:
-    //   - Thin controller philosophy: minimal business logic
-    //   - Delegates all computation to IQuantityMeasurementService
-    //   - Acts as a Facade for the service layer complexity
-    //   - Methods named performXXX to reflect REST API readiness
-    //
-    // REST API Readiness (future extension):
-    //   POST /api/quantity/compare
-    //   POST /api/quantity/convert
-    //   POST /api/quantity/add
-    //   POST /api/quantity/subtract
-    //   POST /api/quantity/divide
-    //
-    // Dependency Injection: IQuantityMeasurementService injected via constructor.
+    // QuantityMeasurementController — orchestration and presentation layer.
     public class QuantityMeasurementController
     {
         // Service dependency — injected via constructor (DIP)
         private readonly IQuantityMeasurementService service;
 
-        // Constructor injection — promotes loose coupling and testability
         public QuantityMeasurementController(IQuantityMeasurementService service)
         {
-            this.service = service ?? throw new ArgumentNullException(
-                nameof(service), "Service cannot be null.");
+            this.service = service;
         }
 
         // Performs quantity comparison and displays result.

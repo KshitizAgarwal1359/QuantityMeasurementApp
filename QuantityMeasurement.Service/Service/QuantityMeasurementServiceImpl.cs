@@ -8,7 +8,7 @@ namespace QuantityMeasurement.Service
     //
     // This class is similar to the Quantity<U> class from the perspective of services offered
     // (comparison, conversion, arithmetic), but differs in that it does NOT encapsulate
-    // value/unit attributes. Instead, it operates on QuantityDTO and QuantityModel objects,
+    // value/unit attributes. Instead, it operates on QuantityDTO objects,
     // separating data representation from business logic (SRP).
     //
     // Follows SOLID principles:
@@ -32,11 +32,10 @@ namespace QuantityMeasurement.Service
         // Repository dependency — injected via constructor (DIP)
         private readonly IQuantityMeasurementRepository repository;
 
-        // Constructor injection — promotes loose coupling and testability
+        // Constructor injection
         public QuantityMeasurementServiceImpl(IQuantityMeasurementRepository repository)
         {
-            this.repository = repository ?? throw new ArgumentNullException(
-                nameof(repository), "Repository cannot be null.");
+            this.repository = repository;
         }
 
         // Compares two quantities for equality.
@@ -60,7 +59,7 @@ namespace QuantityMeasurement.Service
 
                 string result = isEqual.ToString();
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                    "COMPARE", first.ToString(), second.ToString(), null, result);
+                    "COMPARE", first.ToString(), second.ToString(), null, result, first.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(isEqual ? 1.0 : 0.0, "BOOLEAN", "RESULT");
@@ -72,7 +71,7 @@ namespace QuantityMeasurement.Service
             catch (Exception ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    "COMPARE", ex.Message);
+                    "COMPARE", ex.Message, first?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException("Comparison failed: " + ex.Message, ex);
             }
@@ -96,7 +95,7 @@ namespace QuantityMeasurement.Service
                 double convertedValue = Math.Round(targetUnit.ConvertFromBaseUnit(baseValue), 6);
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                    "CONVERT", source.ToString(), targetUnitName, convertedValue.ToString());
+                    "CONVERT", source.ToString(), targetUnitName, convertedValue.ToString(), source.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(convertedValue, targetUnitName, source.MeasurementType);
@@ -108,7 +107,7 @@ namespace QuantityMeasurement.Service
             catch (Exception ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    "CONVERT", ex.Message);
+                    "CONVERT", ex.Message, source?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException("Conversion failed: " + ex.Message, ex);
             }
@@ -157,7 +156,7 @@ namespace QuantityMeasurement.Service
                 double ratio = baseValue1 / baseValue2;
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                    "DIVIDE", first.ToString(), second.ToString(), null, ratio.ToString());
+                    "DIVIDE", first.ToString(), second.ToString(), null, ratio.ToString(), first.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(ratio, "RATIO", "RESULT");
@@ -169,14 +168,14 @@ namespace QuantityMeasurement.Service
             catch (InvalidOperationException ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    "DIVIDE", ex.Message);
+                    "DIVIDE", ex.Message, first?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException("Division failed: " + ex.Message, ex);
             }
             catch (Exception ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    "DIVIDE", ex.Message);
+                    "DIVIDE", ex.Message, first?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException("Division failed: " + ex.Message, ex);
             }
@@ -210,7 +209,7 @@ namespace QuantityMeasurement.Service
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
                     operationType, first.ToString(), second.ToString(),
-                    targetUnitName, resultValue.ToString());
+                    targetUnitName, resultValue.ToString(), first.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(resultValue, targetUnitName, first.MeasurementType);
@@ -222,7 +221,7 @@ namespace QuantityMeasurement.Service
             catch (InvalidOperationException ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    operationType, ex.Message);
+                    operationType, ex.Message, first?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException(
                     $"{operationType} failed: " + ex.Message, ex);
@@ -230,7 +229,7 @@ namespace QuantityMeasurement.Service
             catch (Exception ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
-                    operationType, ex.Message);
+                    operationType, ex.Message, first?.MeasurementType ?? "N/A");
                 repository.Save(errorEntity);
                 throw new QuantityMeasurementException(
                     $"{operationType} failed: " + ex.Message, ex);

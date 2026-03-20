@@ -7,7 +7,7 @@ namespace QuantityMeasurement.Models
         {
             this.measurementValue = measurementValue;
         }
-        public double MeasurementValue => this.measurementValue;
+        public double MeasurementValue { get { return this.measurementValue; } }
         public override bool Equals(object? obj)
         {
             

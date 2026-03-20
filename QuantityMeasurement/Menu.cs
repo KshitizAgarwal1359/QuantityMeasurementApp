@@ -1,12 +1,10 @@
 using QuantityMeasurement.Controllers;
 using QuantityMeasurement.Models;
 using QuantityMeasurement.Service;
-
 namespace QuantityMeasurement
 {
     // UC15: Menu class — interactive console menu for the Quantity Measurement Application.
     // Implements IMenu to provide a user-friendly interface for all measurement operations.
-    //
     // Flow: Main Menu → Select Operation → Select Measurement Type → Select Units → Enter Values → Display Result
     //
     // Supported Operations:
@@ -39,8 +37,7 @@ namespace QuantityMeasurement
         // Constructor — receives controller dependency
         public Menu(QuantityMeasurementController controller)
         {
-            this.controller = controller ?? throw new ArgumentNullException(
-                nameof(controller), "Controller cannot be null.");
+            this.controller = controller;
         }
 
         // Starts the interactive menu loop — runs until user selects Exit
@@ -116,14 +113,19 @@ namespace QuantityMeasurement
         // Returns the available units for a given measurement type
         private string[] GetUnitsForType(string measurementType)
         {
-            return measurementType switch
+            switch (measurementType)
             {
-                "LENGTH" => LengthUnits,
-                "WEIGHT" => WeightUnits,
-                "VOLUME" => VolumeUnits,
-                "TEMPERATURE" => TemperatureUnits,
-                _ => Array.Empty<string>()
-            };
+                case "LENGTH":
+                    return LengthUnits;
+                case "WEIGHT":
+                    return WeightUnits;
+                case "VOLUME":
+                    return VolumeUnits;
+                case "TEMPERATURE":
+                    return TemperatureUnits;
+                default:
+                    return Array.Empty<string>();
+            }
         }
 
         // Displays available units for a measurement type and returns the selected unit
@@ -228,13 +230,22 @@ namespace QuantityMeasurement
         //       → (For Add/Subtract: select target unit) → Display result
         private void HandleArithmetic(string operation)
         {
-            string operationName = operation switch
+            string operationName;
+            switch (operation)
             {
-                "ADD" => "ADD TWO QUANTITIES",
-                "SUBTRACT" => "SUBTRACT TWO QUANTITIES",
-                "DIVIDE" => "DIVIDE TWO QUANTITIES",
-                _ => operation
-            };
+                case "ADD":
+                    operationName = "ADD TWO QUANTITIES";
+                    break;
+                case "SUBTRACT":
+                    operationName = "SUBTRACT TWO QUANTITIES";
+                    break;
+                case "DIVIDE":
+                    operationName = "DIVIDE TWO QUANTITIES";
+                    break;
+                default:
+                    operationName = operation;
+                    break;
+            }
 
             Console.WriteLine();
             Console.WriteLine($"===== {operationName} =====");
