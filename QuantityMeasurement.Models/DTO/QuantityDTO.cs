@@ -1,46 +1,39 @@
+using System.ComponentModel.DataAnnotations;
 namespace QuantityMeasurement.Models
 {
-    // UC15: Data Transfer Object (POCO) for holding quantity measurement input data.
-    // Transfers data between external systems (Controller) and the Service layer.
-    // Contains value, unit name (string), and measurement type (string) — no dependencies on IMeasurable.
-    //
-    // The IMeasurableUnit interface and corresponding inner enums provide a self-contained
-    // representation of quantity input, making it easier to create QuantityDTO instances
-    // and to map these units to the existing IMeasurable units for conversion.
-    //
-    // Supported measurement types:
-    //   LENGTH (feet, inches, yards, centimeters)
-    //   WEIGHT (kilogram, gram, pound)
-    //   VOLUME (litre, millilitre, gallon)
-    //   TEMPERATURE (celsius, fahrenheit)
+    // UC17: Data Transfer Object for API input.
     public class QuantityDTO
     {
-        // IMeasurableUnit interface defined within DTO for self-contained unit representation.
-        // Different from IMeasurable — this is a simple marker for DTO-level unit categorization.
+        // Inner enums for type-safe unit specification
         public interface IMeasurableUnit { }
-
-        // Inner enums implementing IMeasurableUnit for type-safe unit specification in DTOs.
         public enum LengthUnit : byte { FEET, INCH, YARDS, CENTIMETERS }
         public enum WeightUnit : byte { KILOGRAM, GRAM, POUND }
         public enum VolumeUnit : byte { LITRE, MILLILITRE, GALLON }
         public enum TemperatureUnit : byte { CELSIUS, FAHRENHEIT }
 
-        // The numerical value of the measurement
-        public double Value { get; }
-        // The unit name as a string (e.g., "FEET", "KILOGRAM", "CELSIUS")
-        public string UnitName { get; }
-        // The measurement category (e.g., "LENGTH", "WEIGHT", "VOLUME", "TEMPERATURE")
-        public string MeasurementType { get; }
+        // The numerical value
+        [Required]
+        public double Value { get; set; }
 
-        // Constructor for creating a QuantityDTO with value, unit, and measurement type.
+        // The unit name string (e.g., "FEET", "KILOGRAM")
+        [Required]
+        public string UnitName { get; set; } = "";
+
+        // The measurement category (e.g., "LENGTH", "WEIGHT")
+        [Required]
+        public string MeasurementType { get; set; } = "";
+
+        // Parameterless constructor for JSON deserialization
+        public QuantityDTO() { }
+
+        // Constructor for creating a QuantityDTO
         public QuantityDTO(double value, string unitName, string measurementType)
         {
-            this.Value = value;
-            this.UnitName = unitName;
-            this.MeasurementType = measurementType;
+            Value = value;
+            UnitName = unitName;
+            MeasurementType = measurementType;
         }
 
-        // Override ToString for readable display
         public override string ToString()
         {
             return $"{Value} {UnitName} ({MeasurementType})";

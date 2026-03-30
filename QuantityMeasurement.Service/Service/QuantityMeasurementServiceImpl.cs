@@ -3,44 +3,17 @@ using QuantityMeasurement.Repository;
 
 namespace QuantityMeasurement.Service
 {
-    // UC15: QuantityMeasurementServiceImpl — core business logic implementation.
-    // Implements IQuantityMeasurementService and encapsulates all quantity measurement operations.
-    //
-    // This class is similar to the Quantity<U> class from the perspective of services offered
-    // (comparison, conversion, arithmetic), but differs in that it does NOT encapsulate
-    // value/unit attributes. Instead, it operates on QuantityDTO objects,
-    // separating data representation from business logic (SRP).
-    //
-    // Follows SOLID principles:
-    //   SRP: Solely responsible for quantity measurement operations
-    //   OCP: Open for extension (new measurement types) without modification
-    //   DIP: Depends on IQuantityMeasurementRepository abstraction, not concrete implementation
-    //
-    // Interacts with IQuantityMeasurementRepository to save operation results for audit/history.
-    // Dependency injection via constructor provides the repository instance.
-    //
-    // Broad operation flow:
-    //   1. Accept QuantityDTO input
-    //   2. Resolve IMeasurable units from string names
-    //   3. Validate cross-category constraints
-    //   4. Perform business logic using Quantity<U> instances
-    //   5. Handle exceptions and convert to QuantityMeasurementException
-    //   6. Create QuantityMeasurementEntity and save to repository
-    //   7. Return standardized QuantityDTO result
+    // UC17: Service implementation with history/count methods.
     public class QuantityMeasurementServiceImpl : IQuantityMeasurementService
     {
-        // Repository dependency — injected via constructor (DIP)
         private readonly IQuantityMeasurementRepository repository;
 
-        // Constructor injection
         public QuantityMeasurementServiceImpl(IQuantityMeasurementRepository repository)
         {
             this.repository = repository;
         }
 
-        // Compares two quantities for equality.
-        // Validates that both quantities belong to the same measurement category.
-        // Returns QuantityDTO with result "true" or "false".
+        // Compare two quantities for equality
         public QuantityDTO Compare(QuantityDTO first, QuantityDTO second)
         {
             try
@@ -52,14 +25,13 @@ namespace QuantityMeasurement.Service
                 IMeasurable unit1 = ResolveUnit(first.UnitName);
                 IMeasurable unit2 = ResolveUnit(second.UnitName);
 
-                // Convert both to base unit for comparison
                 double baseValue1 = unit1.ConvertToBaseUnit(first.Value);
                 double baseValue2 = unit2.ConvertToBaseUnit(second.Value);
                 bool isEqual = baseValue1.CompareTo(baseValue2) == 0;
 
                 string result = isEqual.ToString();
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                    "COMPARE", first.ToString(), second.ToString(), null, result, first.MeasurementType);
+                    "COMPARE", first.ToString(), second.ToString(), "N/A", result, first.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(isEqual ? 1.0 : 0.0, "BOOLEAN", "RESULT");
@@ -77,8 +49,7 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // Converts a quantity from its current unit to a target unit.
-        // Validates that source and target units are in the same measurement category.
+        // Convert a quantity to a target unit
         public QuantityDTO Convert(QuantityDTO source, string targetUnitName)
         {
             try
@@ -87,10 +58,8 @@ namespace QuantityMeasurement.Service
 
                 IMeasurable sourceUnit = ResolveUnit(source.UnitName);
                 IMeasurable targetUnit = ResolveUnit(targetUnitName);
-
                 ValidateSameCategoryByUnit(sourceUnit, targetUnit);
 
-                // Convert: source -> base -> target
                 double baseValue = sourceUnit.ConvertToBaseUnit(source.Value);
                 double convertedValue = Math.Round(targetUnit.ConvertFromBaseUnit(baseValue), 6);
 
@@ -113,24 +82,29 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // Adds two quantities. Result expressed in the specified target unit.
-        // Validates same category and arithmetic support.
+        // Add two quantities
         public QuantityDTO Add(QuantityDTO first, QuantityDTO second, string targetUnitName)
         {
-            return PerformArithmetic(first, second, targetUnitName, "ADD",
-                (base1, base2) => base1 + base2);
+            return PerformArithmetic(first, second, targetUnitName, "ADD", AddValues);
         }
 
-        // Subtracts second quantity from first. Result expressed in the specified target unit.
-        // Validates same category and arithmetic support.
+        private double AddValues(double base1, double base2)
+        {
+            return base1 + base2;
+        }
+
+        // Subtract second from first
         public QuantityDTO Subtract(QuantityDTO first, QuantityDTO second, string targetUnitName)
         {
-            return PerformArithmetic(first, second, targetUnitName, "SUBTRACT",
-                (base1, base2) => base1 - base2);
+            return PerformArithmetic(first, second, targetUnitName, "SUBTRACT", SubtractValues);
         }
 
-        // Divides first quantity by second. Returns dimensionless scalar result.
-        // Division by zero is handled with clear error message.
+        private double SubtractValues(double base1, double base2)
+        {
+            return base1 - base2;
+        }
+
+        // Divide first by second
         public QuantityDTO Divide(QuantityDTO first, QuantityDTO second)
         {
             try
@@ -142,7 +116,6 @@ namespace QuantityMeasurement.Service
                 IMeasurable unit1 = ResolveUnit(first.UnitName);
                 IMeasurable unit2 = ResolveUnit(second.UnitName);
 
-                // Validate arithmetic support (temperature throws here)
                 ((IMeasurable)unit1).ValidateOperationSupport("DIVIDE");
 
                 double baseValue1 = unit1.ConvertToBaseUnit(first.Value);
@@ -156,7 +129,7 @@ namespace QuantityMeasurement.Service
                 double ratio = baseValue1 / baseValue2;
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
-                    "DIVIDE", first.ToString(), second.ToString(), null, ratio.ToString(), first.MeasurementType);
+                    "DIVIDE", first.ToString(), second.ToString(), "N/A", ratio.ToString(), first.MeasurementType);
                 repository.Save(entity);
 
                 return new QuantityDTO(ratio, "RATIO", "RESULT");
@@ -181,9 +154,34 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // UC13-pattern centralized arithmetic helper — eliminates duplication between Add and Subtract.
-        // Validates operands, resolves units, checks arithmetic support, performs operation,
-        // converts to target unit, saves entity, and returns result.
+        // UC17: Get history by operation type
+        public List<QuantityMeasurementDTO> GetHistoryByOperation(string operationType)
+        {
+            List<QuantityMeasurementEntity> entities = repository.GetMeasurementsByOperation(operationType);
+            return QuantityMeasurementDTO.FromEntityList(entities);
+        }
+
+        // UC17: Get history by measurement type
+        public List<QuantityMeasurementDTO> GetHistoryByType(string measurementType)
+        {
+            List<QuantityMeasurementEntity> entities = repository.GetMeasurementsByType(measurementType);
+            return QuantityMeasurementDTO.FromEntityList(entities);
+        }
+
+        // UC17: Get count of successful operations
+        public int GetCountByOperation(string operationType)
+        {
+            return repository.GetCountByOperation(operationType);
+        }
+
+        // UC17: Get all errored measurements
+        public List<QuantityMeasurementDTO> GetErrorHistory()
+        {
+            List<QuantityMeasurementEntity> entities = repository.GetErroredMeasurements();
+            return QuantityMeasurementDTO.FromEntityList(entities);
+        }
+
+        // Arithmetic helper — shared by Add and Subtract
         private QuantityDTO PerformArithmetic(QuantityDTO first, QuantityDTO second,
             string targetUnitName, string operationType, Func<double, double, double> operation)
         {
@@ -197,9 +195,7 @@ namespace QuantityMeasurement.Service
                 IMeasurable unit2 = ResolveUnit(second.UnitName);
                 IMeasurable targetUnit = ResolveUnit(targetUnitName);
 
-                // Validate arithmetic support (temperature throws here via IMeasurable default/override)
                 ((IMeasurable)unit1).ValidateOperationSupport(operationType);
-
                 ValidateSameCategoryByUnit(unit1, targetUnit);
 
                 double baseValue1 = unit1.ConvertToBaseUnit(first.Value);
@@ -236,9 +232,6 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // ---- Validation Helpers ----
-
-        // Validates that a QuantityDTO is not null.
         private static void ValidateNotNull(QuantityDTO dto, string name)
         {
             if (dto is null)
@@ -247,7 +240,6 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // Validates that two QuantityDTOs belong to the same measurement category.
         private static void ValidateSameCategory(QuantityDTO first, QuantityDTO second)
         {
             if (!first.MeasurementType.Equals(second.MeasurementType, StringComparison.OrdinalIgnoreCase))
@@ -258,7 +250,6 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // Validates that two IMeasurable units belong to the same measurement category.
         private static void ValidateSameCategoryByUnit(IMeasurable unit1, IMeasurable unit2)
         {
             if (!unit1.GetMeasurementType().Equals(unit2.GetMeasurementType(), StringComparison.OrdinalIgnoreCase))
@@ -269,8 +260,6 @@ namespace QuantityMeasurement.Service
             }
         }
 
-        // Resolves an IMeasurable unit instance from a string unit name.
-        // Uses the static helper in IMeasurable interface.
         private static IMeasurable ResolveUnit(string unitName)
         {
             IMeasurable? unit = IMeasurable.GetUnitByName(unitName);

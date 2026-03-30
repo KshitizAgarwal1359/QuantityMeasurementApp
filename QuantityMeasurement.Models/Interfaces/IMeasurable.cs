@@ -12,40 +12,35 @@ namespace QuantityMeasurement.Models
         double ConvertToBaseUnit(double value);
         //converts a value from the base unit to this unit.
         double ConvertFromBaseUnit(double baseValue);
-        //returns a human-readable display label for this unit.
         string GetUnitName();
-
         // UC15: Returns the measurement type/category for this unit.
-        // Used to ensure comparisons and conversions are only performed between compatible types
-        // and for converting QuantityDTO to IMeasurable units.
+        // Used to ensure comparisons and conversions are only performed between compatible types and for converting QuantityDTO to IMeasurable units.
         // Example: "LENGTH", "WEIGHT", "VOLUME", "TEMPERATURE"
         string GetMeasurementType();
-
         // UC14: Default method indicating whether this unit supports arithmetic operations.
-        bool SupportsArithmetic() => true;
+        bool SupportsArithmetic() { return true; }
         // UC14: Default method to validate arithmetic operation support.
         void ValidateOperationSupport(string operation) { }
-
         // UC15: Static helper to resolve an IMeasurable unit instance from a unit name string.
         // Used by the service layer to convert QuantityDTO (string-based) to typed IMeasurable units.
         static IMeasurable? GetUnitByName(string unitName)
         {
-            return unitName.ToUpper() switch
+            switch (unitName.ToUpper())
             {
-                "FEET" => LengthUnit.FEET,
-                "INCH" => LengthUnit.INCH,
-                "YARDS" => LengthUnit.YARDS,
-                "CENTIMETERS" => LengthUnit.CENTIMETERS,
-                "KILOGRAM" => WeightUnit.KILOGRAM,
-                "GRAM" => WeightUnit.GRAM,
-                "POUND" => WeightUnit.POUND,
-                "LITRE" => VolumeUnit.LITRE,
-                "MILLILITRE" => VolumeUnit.MILLILITRE,
-                "GALLON" => VolumeUnit.GALLON,
-                "CELSIUS" => TemperatureUnit.CELSIUS,
-                "FAHRENHEIT" => TemperatureUnit.FAHRENHEIT,
-                _ => null
-            };
+                case "FEET": return LengthUnit.FEET;
+                case "INCH": return LengthUnit.INCH;
+                case "YARDS": return LengthUnit.YARDS;
+                case "CENTIMETERS": return LengthUnit.CENTIMETERS;
+                case "KILOGRAM": return WeightUnit.KILOGRAM;
+                case "GRAM": return WeightUnit.GRAM;
+                case "POUND": return WeightUnit.POUND;
+                case "LITRE": return VolumeUnit.LITRE;
+                case "MILLILITRE": return VolumeUnit.MILLILITRE;
+                case "GALLON": return VolumeUnit.GALLON;
+                case "CELSIUS": return TemperatureUnit.CELSIUS;
+                case "FAHRENHEIT": return TemperatureUnit.FAHRENHEIT;
+                default: return null;
+            }
         }
     }
 }

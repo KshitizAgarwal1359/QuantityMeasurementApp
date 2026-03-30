@@ -1,37 +1,26 @@
 using QuantityMeasurement.Models;
-
 namespace QuantityMeasurement.Service
 {
-    // UC15: IQuantityMeasurementService — service layer contract.
-    // Defines operations for working with quantities and their measurements.
-    // Accepts input as QuantityDTO objects and returns results as QuantityDTO objects.
-    //
-    // Supported operations:
-    //   Compare — Compare two quantities for equality
-    //   Convert — Convert a quantity from one unit to another
-    //   Add — Add two quantities
-    //   Subtract — Subtract one quantity from another
-    //   Divide — Divide two quantities (returns dimensionless scalar)
+    // UC17: Service interface — mostly same as UC15/16 with new history/count endpoints.
     public interface IQuantityMeasurementService
     {
-        // Compares two quantities for equality.
-        // Returns QuantityDTO with result "true" or "false".
+        // Compare two quantities for equality
         QuantityDTO Compare(QuantityDTO first, QuantityDTO second);
-
-        // Converts a quantity from its unit to a target unit.
-        // Returns QuantityDTO with the converted value and target unit.
+        // Convert from one unit to another
         QuantityDTO Convert(QuantityDTO source, string targetUnitName);
-
-        // Adds two quantities. Result expressed in the target unit.
-        // Returns QuantityDTO with the sum value and target unit.
+        // Add two quantities
         QuantityDTO Add(QuantityDTO first, QuantityDTO second, string targetUnitName);
-
-        // Subtracts second quantity from first. Result expressed in the target unit.
-        // Returns QuantityDTO with the difference value and target unit.
+        // Subtract second from first
         QuantityDTO Subtract(QuantityDTO first, QuantityDTO second, string targetUnitName);
-
-        // Divides first quantity by second. Returns dimensionless scalar result.
-        // Returns QuantityDTO with the ratio value.
+        // Divide first by second
         QuantityDTO Divide(QuantityDTO first, QuantityDTO second);
+        // UC17: Get operation history by operation type
+        List<QuantityMeasurementDTO> GetHistoryByOperation(string operationType);
+        // UC17: Get measurements by measurement type
+        List<QuantityMeasurementDTO> GetHistoryByType(string measurementType);
+        // UC17: Get count of successful operations
+        int GetCountByOperation(string operationType);
+        // UC17: Get all errored measurements
+        List<QuantityMeasurementDTO> GetErrorHistory();
     }
 }

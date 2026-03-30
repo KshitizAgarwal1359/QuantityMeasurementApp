@@ -1,85 +1,125 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+
 namespace QuantityMeasurement.Models
 {
-    // UC15/UC16: QuantityMeasurementEntity — comprehensive data holder for quantity measurement operations.
-    // Stores operands, operation type, result, measurement type, and error information.
-    // Stores operands, operation type, result, measurement type, and error information.
-    // Data holder for operations
+    // UC17: Entity mapped to QuantityMeasurements table via EF Core.
+    [Table("QuantityMeasurements")]
+    [Microsoft.EntityFrameworkCore.Index(nameof(OperationType))]
+    [Microsoft.EntityFrameworkCore.Index(nameof(MeasurementType))]
     public class QuantityMeasurementEntity
     {
-        public int Id { get; init; }
-        public string OperationType { get; init; }
-        public string? Operand1 { get; init; }
-        public string? Operand2 { get; init; }
-        public string? TargetUnit { get; init; }
-        public string? Result { get; init; }
-        public string MeasurementType { get; init; } = "N/A";
-        public bool HasError { get; init; }
-        public string? ErrorMessage { get; init; }
-        public DateTime Timestamp { get; init; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
+        [Column("OperationType")]
+        [Required]
+        [MaxLength(50)]
+        public string OperationType { get; set; } = "UNKNOWN";
+
+        [Column("FirstOperand")]
+        [MaxLength(200)]
+        public string Operand1 { get; set; } = "N/A";
+
+        [Column("SecondOperand")]
+        [MaxLength(200)]
+        public string Operand2 { get; set; } = "N/A";
+
+        [NotMapped]
+        public string TargetUnit { get; set; } = "N/A";
+
+        [Column("FinalResult")]
+        [MaxLength(200)]
+        public string Result { get; set; } = "N/A";
+
+        [Column("MeasurementType")]
+        [MaxLength(50)]
+        public string MeasurementType { get; set; } = "N/A";
+
+        [Column("HasError")]
+        public bool HasError { get; set; }
+
+        [Column("ErrorMessage")]
+        [MaxLength(500)]
+        public string ErrorMessage { get; set; } = "None";
+
+        [Column("RecordedAt")]
+        public DateTime Timestamp { get; set; }
+
+        // Single-operand constructor (conversion)
         public QuantityMeasurementEntity(string operationType, string operand1,
             string targetUnit, string result)
         {
-            this.OperationType = operationType;
-            this.Operand1 = operand1;
-            this.Operand2 = null;
-            this.TargetUnit = targetUnit;
-            this.Result = result;
-            this.MeasurementType = "N/A";
-            this.HasError = false;
-            this.ErrorMessage = "None";
-            this.Timestamp = DateTime.UtcNow;
+            OperationType = operationType;
+            Operand1 = operand1;
+            Operand2 = "N/A";
+            TargetUnit = targetUnit;
+            Result = result;
+            MeasurementType = "N/A";
+            HasError = false;
+            ErrorMessage = "None";
+            Timestamp = DateTime.UtcNow;
         }
+
+        // Single-operand with measurement type
         public QuantityMeasurementEntity(string operationType, string operand1,
             string targetUnit, string result, string measurementType)
         {
-            this.OperationType = operationType;
-            this.Operand1 = operand1;
-            this.Operand2 = null;
-            this.TargetUnit = targetUnit;
-            this.Result = result;
-            this.MeasurementType = measurementType;
-            this.HasError = false;
-            this.ErrorMessage = "None";
-            this.Timestamp = DateTime.UtcNow;
+            OperationType = operationType;
+            Operand1 = operand1;
+            Operand2 = "N/A";
+            TargetUnit = targetUnit;
+            Result = result;
+            MeasurementType = measurementType;
+            HasError = false;
+            ErrorMessage = "None";
+            Timestamp = DateTime.UtcNow;
         }
+
+        // Binary-operand constructor (arithmetic)
         public QuantityMeasurementEntity(string operationType, string operand1,
-            string operand2, string? targetUnit, string result, string measurementType = "N/A")
+            string operand2, string targetUnit, string result, string measurementType = "N/A")
         {
-            this.OperationType = operationType;
-            this.Operand1 = operand1;
-            this.Operand2 = operand2;
-            this.TargetUnit = targetUnit;
-            this.Result = result;
-            this.MeasurementType = measurementType;
-            this.HasError = false;
-            this.ErrorMessage = "None";
-            this.Timestamp = DateTime.UtcNow;
+            OperationType = operationType;
+            Operand1 = operand1;
+            Operand2 = operand2;
+            TargetUnit = targetUnit ?? "N/A";
+            Result = result;
+            MeasurementType = measurementType;
+            HasError = false;
+            ErrorMessage = "None";
+            Timestamp = DateTime.UtcNow;
         }
+
+        // Error constructor
         public QuantityMeasurementEntity(string operationType, string errorMessage,
             string measurementType = "N/A")
         {
-            this.OperationType = operationType;
-            this.Operand1 = null;
-            this.Operand2 = null;
-            this.Result = "N/A";
-            this.HasError = true;
-            this.ErrorMessage = errorMessage;
-            this.MeasurementType = measurementType;
-            this.Timestamp = DateTime.UtcNow;
+            OperationType = operationType;
+            Operand1 = "N/A";
+            Operand2 = "N/A";
+            Result = "N/A";
+            HasError = true;
+            ErrorMessage = errorMessage;
+            MeasurementType = measurementType;
+            Timestamp = DateTime.UtcNow;
         }
+
+        // Parameterless constructor required by EF Core
         [JsonConstructor]
         public QuantityMeasurementEntity()
         {
-            this.OperationType = "UNKNOWN";
-            this.Operand1 = "N/A";
-            this.Operand2 = "N/A";
-            this.Result = "N/A";
-            this.ErrorMessage = "None";
-            this.MeasurementType = "N/A";
-            this.Timestamp = DateTime.UtcNow;
+            OperationType = "UNKNOWN";
+            Operand1 = "N/A";
+            Operand2 = "N/A";
+            Result = "N/A";
+            ErrorMessage = "None";
+            MeasurementType = "N/A";
+            Timestamp = DateTime.UtcNow;
         }
+
         public override string ToString()
         {
             if (HasError)
