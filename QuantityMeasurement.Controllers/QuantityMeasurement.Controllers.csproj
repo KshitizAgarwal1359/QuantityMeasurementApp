@@ -14,5 +14,5 @@
     <ProjectReference Include="..\QuantityMeasurement.Models\QuantityMeasurement.Models.csproj" />
     <ProjectReference Include="..\QuantityMeasurement.Service\QuantityMeasurement.Service.csproj" />
   </ItemGroup>
-
+  
 </Project>

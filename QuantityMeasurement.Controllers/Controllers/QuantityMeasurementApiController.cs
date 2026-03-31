@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuantityMeasurement.Models;
 using QuantityMeasurement.Service;
 
 namespace QuantityMeasurement.Controllers
 {
-    // UC17: REST API Controller for quantity measurement operations.
+    // UC18: REST API Controller — requires JWT authentication.
+    [Authorize]
     [ApiController]
     [Route("api/v1/quantities")]
     [Produces("application/json")]
