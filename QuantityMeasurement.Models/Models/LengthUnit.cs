@@ -20,8 +20,8 @@ namespace QuantityMeasurement.Models
         public static readonly LengthUnit INCH = new LengthUnit("INCH", "inch", 1.0 / 12.0);
         // 1 yard = 3 feet
         public static readonly LengthUnit YARDS = new LengthUnit("YARDS", "yards", 3.0);
-        // 1 cm = 0.393701 inches = 0.393701/12 feet
-        public static readonly LengthUnit CENTIMETERS = new LengthUnit("CENTIMETERS", "cm", 0.393701 / 12.0);
+        // 1 cm = 1/2.54 inches = (1/2.54)/12 feet = 1/30.48 feet
+        public static readonly LengthUnit CENTIMETERS = new LengthUnit("CENTIMETERS", "cm", 1.0 / 30.48);
         private readonly string name;
         private readonly string unitLabel;
         private readonly double conversionFactor;
