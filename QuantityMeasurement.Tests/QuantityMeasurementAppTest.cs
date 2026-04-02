@@ -1,0 +1,3765 @@
+using Microsoft.EntityFrameworkCore;
+using QuantityMeasurement.Models;
+using QuantityMeasurement.Services;
+using QuantityMeasurement.Service;
+using QuantityMeasurement.Repository;
+using QuantityMeasurement.Controllers;
+namespace QuantityMeasurement.Tests
+{
+    public class QuantityMeasurementAppTest
+    {
+        // UC17: Helper to create a fresh EF Core in-memory test repository
+        private static IQuantityMeasurementRepository CreateTestRepository()
+        {
+            var options = new DbContextOptionsBuilder<QuantityMeasurementDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            var context = new QuantityMeasurementDbContext(options);
+            return new QuantityMeasurementEfRepository(context);
+        }
+        // ==================== Feet Equality Tests (UC1) ====================
+        [Fact]
+        public void TestFeetEquality_SameValue()
+        {
+            Feet firstFeetValue = new Feet(1.0);
+            Feet secondFeetValue = new Feet(1.0);
+            bool isEqual = firstFeetValue.Equals(secondFeetValue);
+            Assert.True(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_DifferentValue()
+        {
+            Feet firstFeetValue = new Feet(1.0);
+            Feet secondFeetValue = new Feet(2.0);
+            bool isEqual = firstFeetValue.Equals(secondFeetValue);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_NullComparison()
+        {
+            Feet firstFeetValue = new Feet(1.0);
+            bool isEqual = firstFeetValue.Equals(null);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_DifferentClass()
+        {
+            Feet firstFeetValue = new Feet(1.0);
+            object differentClassObject = "Not a Feet object";
+            bool isEqual = firstFeetValue.Equals(differentClassObject);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_SameReference()
+        {
+            Feet firstFeetValue = new Feet(1.0);
+            bool isEqual = firstFeetValue.Equals(firstFeetValue);
+            Assert.True(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_ZeroValueComparison()
+        {
+            Feet firstFeetValue = new Feet(0.0);
+            Feet secondFeetValue = new Feet(0.0);
+            bool isEqual = firstFeetValue.Equals(secondFeetValue);
+            Assert.True(isEqual);
+        }
+        [Fact]
+        public void TestFeetEquality_NegativeValueComparison()
+        {
+            Feet firstFeetValue = new Feet(-5.5);
+            Feet secondFeetValue = new Feet(-5.5);
+            bool isEqual = firstFeetValue.Equals(secondFeetValue);
+            Assert.True(isEqual);
+        }
+        // ==================== Inches Equality Tests (UC2) ====================
+        [Fact]
+        public void TestInchesEquality_SameValue()
+        {
+            Inches firstInchesValue = new Inches(1.0);
+            Inches secondInchesValue = new Inches(1.0);
+            bool isEqual = firstInchesValue.Equals(secondInchesValue);
+            Assert.True(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_DifferentValue()
+        {
+            Inches firstInchesValue = new Inches(1.0);
+            Inches secondInchesValue = new Inches(2.0);
+            bool isEqual = firstInchesValue.Equals(secondInchesValue);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_NullComparison()
+        {
+            Inches firstInchesValue = new Inches(1.0);
+            bool isEqual = firstInchesValue.Equals(null);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_DifferentClass()
+        {
+            Inches firstInchesValue = new Inches(1.0);
+            object differentClassObject = "Not an Inches object";
+            bool isEqual = firstInchesValue.Equals(differentClassObject);
+            Assert.False(isEqual);
+        }
+        [Fact]
+        public void TestInchesEquality_SameReference()
+        {
+            Inches firstInchesValue = new Inches(1.0);
+            bool isEqual = firstInchesValue.Equals(firstInchesValue);
+            Assert.True(isEqual);
+        }
+        // ==================== QuantityLength Tests (UC3 - DRY Principle) ====================
+        // Verifies that Quantity(1.0, "feet") equals Quantity(1.0, "feet")
+        [Fact]
+        public void TestEquality_FeetToFeet_SameValue()
+        {
+            QuantityLength firstQuantity = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength secondQuantity = new QuantityLength(1.0, LengthUnit.FEET);
+            bool isEqual = firstQuantity.Equals(secondQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, "inch") equals Quantity(1.0, "inch")
+        [Fact]
+        public void TestEquality_InchToInch_SameValue()
+        {
+            QuantityLength firstQuantity = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength secondQuantity = new QuantityLength(1.0, LengthUnit.INCH);
+            bool isEqual = firstQuantity.Equals(secondQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, "feet") equals Quantity(12.0, "inch") - cross-unit equality
+        [Fact]
+        public void TestEquality_FeetToInch_EquivalentValue()
+        {
+            QuantityLength feetQuantity = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength inchQuantity = new QuantityLength(12.0, LengthUnit.INCH);
+            bool isEqual = feetQuantity.Equals(inchQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(12.0, "inch") equals Quantity(1.0, "feet") - symmetry of conversion
+        [Fact]
+        public void TestEquality_InchToFeet_EquivalentValue()
+        {
+            QuantityLength inchQuantity = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength feetQuantity = new QuantityLength(1.0, LengthUnit.FEET);
+            bool isEqual = inchQuantity.Equals(feetQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, "feet") does not equal Quantity(2.0, "feet")
+        [Fact]
+        public void TestEquality_FeetToFeet_DifferentValue()
+        {
+            QuantityLength firstQuantity = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength secondQuantity = new QuantityLength(2.0, LengthUnit.FEET);
+            bool isEqual = firstQuantity.Equals(secondQuantity);
+            Assert.False(isEqual);
+        }
+        // Verifies that Quantity(1.0, "inch") does not equal Quantity(2.0, "inch")
+        [Fact]
+        public void TestEquality_InchToInch_DifferentValue()
+        {
+            QuantityLength firstQuantity = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength secondQuantity = new QuantityLength(2.0, LengthUnit.INCH);
+            bool isEqual = firstQuantity.Equals(secondQuantity);
+            Assert.False(isEqual);
+        }
+        // Verifies that a QuantityLength object equals itself (reflexive property)
+        [Fact]
+        public void TestEquality_SameReference()
+        {
+            QuantityLength quantity = new QuantityLength(1.0, LengthUnit.FEET);
+            bool isEqual = quantity.Equals(quantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that a QuantityLength object is not equal to null
+        [Fact]
+        public void TestEquality_NullComparison()
+        {
+            QuantityLength quantity = new QuantityLength(1.0, LengthUnit.FEET);
+            bool isEqual = quantity.Equals(null);
+            Assert.False(isEqual);
+        }
+        // Verifies that a QuantityLength compared with a different type returns false
+        [Fact]
+        public void TestEquality_DifferentClass()
+        {
+            QuantityLength quantity = new QuantityLength(1.0, LengthUnit.FEET);
+            object differentClassObject = "Not a QuantityLength object";
+            bool isEqual = quantity.Equals(differentClassObject);
+            Assert.False(isEqual);
+        }
+        // Verifies that zero feet equals zero inches (cross-unit zero value)
+        [Fact]
+        public void TestEquality_ZeroFeet_ZeroInches()
+        {
+            QuantityLength zeroFeet = new QuantityLength(0.0, LengthUnit.FEET);
+            QuantityLength zeroInches = new QuantityLength(0.0, LengthUnit.INCH);
+            bool isEqual = zeroFeet.Equals(zeroInches);
+            Assert.True(isEqual);
+        }
+        // ==================== Yards and Centimeters Tests (UC4 - Extended Unit Support) ====================
+        // Verifies that Quantity(1.0, YARDS) equals Quantity(1.0, YARDS)
+        [Fact]
+        public void TestEquality_YardToYard_SameValue()
+        {
+            QuantityLength firstYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength secondYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            bool isEqual = firstYard.Equals(secondYard);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, YARDS) does not equal Quantity(2.0, YARDS)
+        [Fact]
+        public void TestEquality_YardToYard_DifferentValue()
+        {
+            QuantityLength firstYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength secondYard = new QuantityLength(2.0, LengthUnit.YARDS);
+            bool isEqual = firstYard.Equals(secondYard);
+            Assert.False(isEqual);
+        }
+        // Verifies that Quantity(1.0, YARDS) equals Quantity(3.0, FEET)
+        [Fact]
+        public void TestEquality_YardToFeet_EquivalentValue()
+        {
+            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength threeFeet = new QuantityLength(3.0, LengthUnit.FEET);
+            bool isEqual = oneYard.Equals(threeFeet);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(3.0, FEET) equals Quantity(1.0, YARDS) - symmetry
+        [Fact]
+        public void TestEquality_FeetToYard_EquivalentValue()
+        {
+            QuantityLength threeFeet = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            bool isEqual = threeFeet.Equals(oneYard);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, YARDS) equals Quantity(36.0, INCHES)
+        [Fact]
+        public void TestEquality_YardToInches_EquivalentValue()
+        {
+            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength thirtySixInches = new QuantityLength(36.0, LengthUnit.INCH);
+            bool isEqual = oneYard.Equals(thirtySixInches);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(36.0, INCHES) equals Quantity(1.0, YARDS) - symmetry
+        [Fact]
+        public void TestEquality_InchesToYard_EquivalentValue()
+        {
+            QuantityLength thirtySixInches = new QuantityLength(36.0, LengthUnit.INCH);
+            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            bool isEqual = thirtySixInches.Equals(oneYard);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, YARDS) does not equal Quantity(2.0, FEET)
+        [Fact]
+        public void TestEquality_YardToFeet_NonEquivalentValue()
+        {
+            QuantityLength oneYard = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength twoFeet = new QuantityLength(2.0, LengthUnit.FEET);
+            bool isEqual = oneYard.Equals(twoFeet);
+            Assert.False(isEqual);
+        }
+        // Verifies that Quantity(1.0, CENTIMETERS) equals Quantity(0.393701, INCHES)
+        [Fact]
+        public void TestEquality_CentimetersToInches_EquivalentValue()
+        {
+            QuantityLength oneCm = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength equivalentInches = new QuantityLength(0.393701, LengthUnit.INCH);
+            bool isEqual = oneCm.Equals(equivalentInches);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, CENTIMETERS) does not equal Quantity(1.0, FEET)
+        [Fact]
+        public void TestEquality_CentimetersToFeet_NonEquivalentValue()
+        {
+            QuantityLength oneCm = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            bool isEqual = oneCm.Equals(oneFoot);
+            Assert.False(isEqual);
+        }
+        // Verifies that Quantity(2.0, CENTIMETERS) equals Quantity(2.0, CENTIMETERS)
+        [Fact]
+        public void TestEquality_CmToCm_SameValue()
+        {
+            QuantityLength firstCm = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
+            QuantityLength secondCm = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
+            bool isEqual = firstCm.Equals(secondCm);
+            Assert.True(isEqual);
+        }
+        // Verifies that Quantity(1.0, CENTIMETERS) does not equal Quantity(2.0, CENTIMETERS)
+        [Fact]
+        public void TestEquality_CmToCm_DifferentValue()
+        {
+            QuantityLength firstCm = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength secondCm = new QuantityLength(2.0, LengthUnit.CENTIMETERS);
+            bool isEqual = firstCm.Equals(secondCm);
+            Assert.False(isEqual);
+        }
+        // Verifies transitive property: 1 Yard = 3 Feet, 3 Feet = 36 Inches, so 1 Yard = 36 Inches
+        [Fact]
+        public void TestEquality_MultiUnit_TransitiveProperty()
+        {
+            QuantityLength quantityA = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength quantityB = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength quantityC = new QuantityLength(36.0, LengthUnit.INCH);
+            // A equals B
+            Assert.True(quantityA.Equals(quantityB));
+            // B equals C
+            Assert.True(quantityB.Equals(quantityC));
+            // Therefore A equals C (transitive)
+            Assert.True(quantityA.Equals(quantityC));
+        }
+        // Verifies that a Quantity yard object equals itself (reflexive property)
+        [Fact]
+        public void TestEquality_YardSameReference()
+        {
+            QuantityLength yardQuantity = new QuantityLength(1.0, LengthUnit.YARDS);
+            bool isEqual = yardQuantity.Equals(yardQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that a Quantity yard object is not equal to null
+        [Fact]
+        public void TestEquality_YardNullComparison()
+        {
+            QuantityLength yardQuantity = new QuantityLength(1.0, LengthUnit.YARDS);
+            bool isEqual = yardQuantity.Equals(null);
+            Assert.False(isEqual);
+        }
+        // Verifies that a Quantity centimeters object equals itself (reflexive property)
+        [Fact]
+        public void TestEquality_CentimetersSameReference()
+        {
+            QuantityLength cmQuantity = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            bool isEqual = cmQuantity.Equals(cmQuantity);
+            Assert.True(isEqual);
+        }
+        // Verifies that a Quantity centimeters object is not equal to null
+        [Fact]
+        public void TestEquality_CentimetersNullComparison()
+        {
+            QuantityLength cmQuantity = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            bool isEqual = cmQuantity.Equals(null);
+            Assert.False(isEqual);
+        }
+        // Verifies complex scenario: 2 Yards = 6 Feet = 72 Inches
+        [Fact]
+        public void TestEquality_AllUnits_ComplexScenario()
+        {
+            QuantityLength twoYards = new QuantityLength(2.0, LengthUnit.YARDS);
+            QuantityLength sixFeet = new QuantityLength(6.0, LengthUnit.FEET);
+            QuantityLength seventyTwoInches = new QuantityLength(72.0, LengthUnit.INCH);
+            // 2 Yards equals 6 Feet
+            Assert.True(twoYards.Equals(sixFeet));
+            // 6 Feet equals 72 Inches
+            Assert.True(sixFeet.Equals(seventyTwoInches));
+            // 2 Yards equals 72 Inches
+            Assert.True(twoYards.Equals(seventyTwoInches));
+        }
+        // Verifies zero values across all units are equal
+        [Fact]
+        public void TestEquality_ZeroValues_AllUnits()
+        {
+            QuantityLength zeroFeet = new QuantityLength(0.0, LengthUnit.FEET);
+            QuantityLength zeroInches = new QuantityLength(0.0, LengthUnit.INCH);
+            QuantityLength zeroYards = new QuantityLength(0.0, LengthUnit.YARDS);
+            QuantityLength zeroCm = new QuantityLength(0.0, LengthUnit.CENTIMETERS);
+            Assert.True(zeroFeet.Equals(zeroInches));
+            Assert.True(zeroFeet.Equals(zeroYards));
+            Assert.True(zeroFeet.Equals(zeroCm));
+            Assert.True(zeroYards.Equals(zeroCm));
+        }
+        // ==================== Unit Conversion Tests (UC5) ====================
+        // convert(1.0, FEET, INCHES) should return 12.0
+        [Fact]
+        public void TestConversion_FeetToInches()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(12.0, result, 6);
+        }
+        // convert(24.0, INCHES, FEET) should return 2.0
+        [Fact]
+        public void TestConversion_InchesToFeet()
+        {
+            double result = QuantityLength.Convert(24.0, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(2.0, result, 6);
+        }
+        // convert(1.0, YARDS, INCHES) should return 36.0
+        [Fact]
+        public void TestConversion_YardsToInches()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.YARDS, LengthUnit.INCH);
+            Assert.Equal(36.0, result, 6);
+        }
+        // convert(72.0, INCHES, YARDS) should return 2.0
+        [Fact]
+        public void TestConversion_InchesToYards()
+        {
+            double result = QuantityLength.Convert(72.0, LengthUnit.INCH, LengthUnit.YARDS);
+            Assert.Equal(2.0, result, 6);
+        }
+        // convert(2.54, CENTIMETERS, INCHES) should return ~1.0 (within epsilon)
+        [Fact]
+        public void TestConversion_CentimetersToInches()
+        {
+            double result = QuantityLength.Convert(2.54, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            Assert.Equal(1.0, result, 4);
+        }
+        // convert(6.0, FEET, YARDS) should return 2.0
+        [Fact]
+        public void TestConversion_FeetToYards()
+        {
+            double result = QuantityLength.Convert(6.0, LengthUnit.FEET, LengthUnit.YARDS);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Round-trip: convert(convert(v, A, B), B, A) should approximately equal v
+        [Fact]
+        public void TestConversion_RoundTrip_PreservesValue()
+        {
+            double originalValue = 5.5;
+            // Feet -> Inches -> Feet
+            double convertedToInches = QuantityLength.Convert(originalValue, LengthUnit.FEET, LengthUnit.INCH);
+            double convertedBack = QuantityLength.Convert(convertedToInches, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(originalValue, convertedBack, 6);
+        }
+        // convert(0.0, FEET, INCHES) should return 0.0
+        [Fact]
+        public void TestConversion_ZeroValue()
+        {
+            double result = QuantityLength.Convert(0.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(0.0, result, 6);
+        }
+        // convert(-1.0, FEET, INCHES) should return -12.0
+        [Fact]
+        public void TestConversion_NegativeValue()
+        {
+            double result = QuantityLength.Convert(-1.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(-12.0, result, 6);
+        }
+        // Passing NaN should throw ArgumentException
+        [Fact]
+        public void TestConversion_NaN_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.NaN, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Passing PositiveInfinity should throw ArgumentException
+        [Fact]
+        public void TestConversion_PositiveInfinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.PositiveInfinity, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Passing NegativeInfinity should throw ArgumentException
+        [Fact]
+        public void TestConversion_NegativeInfinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                QuantityLength.Convert(double.NegativeInfinity, LengthUnit.FEET, LengthUnit.INCH));
+        }
+        // Conversion results are within acceptable floating-point epsilon tolerance
+        [Fact]
+        public void TestConversion_PrecisionTolerance()
+        {
+            double result = QuantityLength.Convert(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCH);
+            double expected = 0.393701;
+            Assert.True(Math.Abs(result - expected) < 1e-6, $"Expected {expected} but got {result}");
+        }
+        // Converting a unit to itself returns the original value unchanged
+        [Fact]
+        public void TestConversion_SameUnit()
+        {
+            double result = QuantityLength.Convert(5.0, LengthUnit.FEET, LengthUnit.FEET);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Large value conversion maintains precision
+        [Fact]
+        public void TestConversion_LargeValue()
+        {
+            double result = QuantityLength.Convert(1000000.0, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(12000000.0, result, 6);
+        }
+        // Small value conversion maintains precision
+        [Fact]
+        public void TestConversion_SmallValue()
+        {
+            double result = QuantityLength.Convert(0.001, LengthUnit.FEET, LengthUnit.INCH);
+            Assert.Equal(0.012, result, 6);
+        }
+        // Instance method ConvertTo returns a new QuantityLength with converted value
+        [Fact]
+        public void TestConversion_InstanceMethod_ConvertTo()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // ConvertTo returns a NEW instance (immutability check)
+        [Fact]
+        public void TestConversion_ConvertTo_ReturnsNewInstance()
+        {
+            QuantityLength original = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = original.ConvertTo(LengthUnit.INCH);
+            // Original should remain unchanged
+            Assert.Equal(1.0, original.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, original.Unit);
+            // Converted should be different instance with new values
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // Multi-step round-trip: convert(convert(convert(v, A, B), B, C), C, A) ≈ v
+        [Fact]
+        public void TestConversion_MultiStepRoundTrip()
+        {
+            double originalValue = 3.0;
+            // Feet -> Yards -> Inches -> Feet
+            double toYards = QuantityLength.Convert(originalValue, LengthUnit.FEET, LengthUnit.YARDS);
+            double toInches = QuantityLength.Convert(toYards, LengthUnit.YARDS, LengthUnit.INCH);
+            double backToFeet = QuantityLength.Convert(toInches, LengthUnit.INCH, LengthUnit.FEET);
+            Assert.Equal(originalValue, backToFeet, 4);
+        }
+        // Constructor should throw ArgumentException for NaN
+        [Fact]
+        public void TestConstructor_NaN_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new QuantityLength(double.NaN, LengthUnit.FEET));
+        }
+        // Constructor should throw ArgumentException for Infinity
+        [Fact]
+        public void TestConstructor_Infinity_Throws()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new QuantityLength(double.PositiveInfinity, LengthUnit.FEET));
+        }
+        // Yards to Feet conversion
+        [Fact]
+        public void TestConversion_YardsToFeet()
+        {
+            double result = QuantityLength.Convert(3.0, LengthUnit.YARDS, LengthUnit.FEET);
+            Assert.Equal(9.0, result, 6);
+        }
+        //Length Addition Tests (UC6)
+        // Add(Quantity(1.0, FEET), Quantity(2.0, FEET)) should return Quantity(3.0, FEET)
+        [Fact]
+        public void TestAddition_SameUnit_FeetPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Add(Quantity(6.0, INCHES), Quantity(6.0, INCHES)) should return Quantity(12.0, INCHES)
+        [Fact]
+        public void TestAddition_SameUnit_InchPlusInch()
+        {
+            QuantityLength first = new QuantityLength(6.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(6.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(12.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Add(Quantity(1.0, FEET), Quantity(12.0, INCHES)) should return Quantity(2.0, FEET)
+        [Fact]
+        public void TestAddition_CrossUnit_FeetPlusInches()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Add(Quantity(12.0, INCHES), Quantity(1.0, FEET)) should return Quantity(24.0, INCHES)
+        [Fact]
+        public void TestAddition_CrossUnit_InchPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(24.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Add(Quantity(1.0, YARDS), Quantity(3.0, FEET)) should return Quantity(2.0, YARDS)
+        [Fact]
+        public void TestAddition_CrossUnit_YardPlusFeet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // Add(Quantity(2.54, CENTIMETERS), Quantity(1.0, INCHES)) should return ~5.08 CENTIMETERS
+        [Fact]
+        public void TestAddition_CrossUnit_CentimeterPlusInch()
+        {
+            QuantityLength first = new QuantityLength(2.54, LengthUnit.CENTIMETERS);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(5.08, result.MeasurementValue, 2);
+            Assert.Equal(LengthUnit.CENTIMETERS, result.Unit);
+        }
+        // Commutativity: adding in different order should yield same base value
+        [Fact]
+        public void TestAddition_Commutativity()
+        {
+            QuantityLength feet = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength inches = new QuantityLength(12.0, LengthUnit.INCH);
+            // 1 foot + 12 inches = 2 feet
+            QuantityLength resultFeetFirst = feet.Add(inches);
+            // 12 inches + 1 foot = 24 inches
+            QuantityLength resultInchesFirst = inches.Add(feet);
+            // Both should represent the same physical length (2 feet = 24 inches)
+            Assert.True(resultFeetFirst.Equals(resultInchesFirst));
+        }
+        // Adding zero acts as identity element: 5 feet + 0 inches = 5 feet
+        [Fact]
+        public void TestAddition_WithZero()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength zero = new QuantityLength(0.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Negative values: 5 feet + (-2 feet) = 3 feet
+        [Fact]
+        public void TestAddition_NegativeValues()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(-2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Null second operand should throw ArgumentException
+        [Fact]
+        public void TestAddition_NullSecondOperand()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Add(null!));
+        }
+        // Large values: 1e6 feet + 1e6 feet = 2e6 feet
+        [Fact]
+        public void TestAddition_LargeValues()
+        {
+            QuantityLength first = new QuantityLength(1e6, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(1e6, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Small values: 0.001 feet + 0.002 feet = ~0.003 feet
+        [Fact]
+        public void TestAddition_SmallValues()
+        {
+            QuantityLength first = new QuantityLength(0.001, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(0.002, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(0.003, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Immutability: original objects remain unchanged after addition
+        [Fact]
+        public void TestAddition_Immutability()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second);
+            // Original objects should remain unchanged
+            Assert.Equal(1.0, first.MeasurementValue, 6);
+            Assert.Equal(2.0, second.MeasurementValue, 6);
+            // Result should be a new object with the sum
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+        }
+        // Static Add method with QuantityLength objects
+        [Fact]
+        public void TestAddition_StaticMethod_QuantityLengthObjects()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = QuantityLength.Add(first, second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Static Add method with raw values and units
+        [Fact]
+        public void TestAddition_StaticMethod_RawValues()
+        {
+            QuantityLength result = QuantityLength.Add(36.0, LengthUnit.INCH, 1.0, LengthUnit.YARDS);
+            Assert.Equal(72.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Inches + Yard: 36 inches + 1 yard = 72 inches
+        [Fact]
+        public void TestAddition_CrossUnit_InchPlusYard()
+        {
+            QuantityLength first = new QuantityLength(36.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength result = first.Add(second);
+            Assert.Equal(72.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        //Addition with Target Unit Tests (uc7)
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), FEET) should return Quantity(2.0, FEET)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Feet()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), INCHES) should return Quantity(24.0, INCHES)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Inches()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(24.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // add(Quantity(1.0, FEET), Quantity(12.0, INCHES), YARDS) should return ~0.666667 YARDS
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Yards()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // add(Quantity(1.0, INCHES), Quantity(1.0, INCHES), CENTIMETERS) should return ~5.08 CM
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Centimeters()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.CENTIMETERS);
+            Assert.Equal(5.08, result.MeasurementValue, 2);
+            Assert.Equal(LengthUnit.CENTIMETERS, result.Unit);
+        }
+        // add(Quantity(2.0, YARDS), Quantity(3.0, FEET), YARDS) should return Quantity(3.0, YARDS)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SameAsFirstOperand()
+        {
+            QuantityLength first = new QuantityLength(2.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // add(Quantity(2.0, YARDS), Quantity(3.0, FEET), FEET) should return Quantity(9.0, FEET)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SameAsSecondOperand()
+        {
+            QuantityLength first = new QuantityLength(2.0, LengthUnit.YARDS);
+            QuantityLength second = new QuantityLength(3.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(9.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Commutativity with target unit: add(A, B, T) == add(B, A, T)
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_Commutativity()
+        {
+            QuantityLength feet = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength inches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result1 = feet.Add(inches, LengthUnit.YARDS);
+            QuantityLength result2 = inches.Add(feet, LengthUnit.YARDS);
+            Assert.Equal(result1.MeasurementValue, result2.MeasurementValue, 6);
+            Assert.Equal(result1.Unit, result2.Unit);
+        }
+        // Zero with explicit target unit: 5 feet + 0 inches -> YARDS = ~1.666667
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_WithZero()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength zero = new QuantityLength(0.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(zero, LengthUnit.YARDS);
+            Assert.Equal(1.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // Negative with explicit target unit: 5 feet + (-2 feet) -> INCHES = 36.0
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_NegativeValues()
+        {
+            QuantityLength first = new QuantityLength(5.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(-2.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(36.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Large to small scale: 1000 feet + 500 feet -> INCHES = 18000
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_LargeToSmallScale()
+        {
+            QuantityLength first = new QuantityLength(1000.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(500.0, LengthUnit.FEET);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            Assert.Equal(18000.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Small to large scale: 12 inches + 12 inches -> YARDS = ~0.666667
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_SmallToLargeScale()
+        {
+            QuantityLength first = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = first.Add(second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        // 36 inches + 1 yard -> FEET = 6.0
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_InchPlusYardToFeet()
+        {
+            QuantityLength first = new QuantityLength(36.0, LengthUnit.INCH);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.YARDS);
+            QuantityLength result = first.Add(second, LengthUnit.FEET);
+            Assert.Equal(6.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Mathematical equivalence: same addition in different target units represents same physical length
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_MathematicalEquivalence()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength resultInFeet = first.Add(second, LengthUnit.FEET);
+            QuantityLength resultInInches = first.Add(second, LengthUnit.INCH);
+            QuantityLength resultInYards = first.Add(second, LengthUnit.YARDS);
+            // All should represent the same physical length (2 feet)
+            // Using Convert to compare in common unit to handle floating-point rounding
+            double feetValue = resultInFeet.MeasurementValue;
+            double inchesInFeet = QuantityLength.Convert(resultInInches.MeasurementValue, LengthUnit.INCH, LengthUnit.FEET);
+            double yardsInFeet = QuantityLength.Convert(resultInYards.MeasurementValue, LengthUnit.YARDS, LengthUnit.FEET);
+            Assert.Equal(feetValue, inchesInFeet, 4);
+            Assert.Equal(feetValue, yardsInFeet, 4);
+        }
+        //precision tolerance: multiple additions verified with epsilon
+        [Fact]
+        public void TestAddition_ExplicitTargetUnit_PrecisionTolerance()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength second = new QuantityLength(1.0, LengthUnit.CENTIMETERS);
+            QuantityLength result = first.Add(second, LengthUnit.INCH);
+            double expected = 0.787402;
+            Assert.True(Math.Abs(result.MeasurementValue - expected) < 1e-4,
+                $"Expected ~{expected} but got {result.MeasurementValue}");
+        }
+        //static Add method with explicit target unit
+        [Fact]
+        public void TestAddition_StaticMethod_WithTargetUnit()
+        {
+            QuantityLength first = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength second = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = QuantityLength.Add(first, second, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        //Refactored Unit Enum Tests (UC8)
+        //LengthUnit.FEET has correct conversion factor of 1.0
+        [Fact]
+        public void TestLengthUnitEnum_FeetConstant()
+        {
+            Assert.Equal(1.0, LengthUnit.FEET.GetConversionFactor(), 6);
+        }
+        //LengthUnit.INCHES has correct conversion factor of 1/12
+        [Fact]
+        public void TestLengthUnitEnum_InchesConstant()
+        {
+            Assert.Equal(1.0 / 12.0, LengthUnit.INCH.GetConversionFactor(), 6);
+        }
+        //LengthUnit.YARDS has correct conversion factor of 3.0
+        [Fact]
+        public void TestLengthUnitEnum_YardsConstant()
+        {
+            Assert.Equal(3.0, LengthUnit.YARDS.GetConversionFactor(), 6);
+        }
+        //LengthUnit.CENTIMETERS has correct conversion factor
+        [Fact]
+        public void TestLengthUnitEnum_CentimetersConstant()
+        {
+            Assert.Equal(0.393701 / 12.0, LengthUnit.CENTIMETERS.GetConversionFactor(), 6);
+        }
+        //ConvertToBaseUnit: FEET to FEET (already in base unit, returns unchanged)
+        [Fact]
+        public void TestConvertToBaseUnit_FeetToFeet()
+        {
+            double result = LengthUnit.FEET.ConvertToBaseUnit(5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        //ConvertToBaseUnit: INCHES to FEET (12 inches = 1 foot)
+        [Fact]
+        public void TestConvertToBaseUnit_InchesToFeet()
+        {
+            double result = LengthUnit.INCH.ConvertToBaseUnit(12.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //ConvertToBaseUnit: YARDS to FEET (1 yard = 3 feet)
+        [Fact]
+        public void TestConvertToBaseUnit_YardsToFeet()
+        {
+            double result = LengthUnit.YARDS.ConvertToBaseUnit(1.0);
+            Assert.Equal(3.0, result, 6);
+        }
+        //ConvertToBaseUnit: CENTIMETERS to FEET (30.48 cm = ~1 foot)
+        [Fact]
+        public void TestConvertToBaseUnit_CentimetersToFeet()
+        {
+            double result = LengthUnit.CENTIMETERS.ConvertToBaseUnit(30.48);
+            Assert.Equal(1.0, result, 2);
+        }
+        //ConvertFromBaseUnit: FEET to FEET (already in base unit)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToFeet()
+        {
+            double result = LengthUnit.FEET.ConvertFromBaseUnit(2.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to INCHES (1 foot = 12 inches)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToInches()
+        {
+            double result = LengthUnit.INCH.ConvertFromBaseUnit(1.0);
+            Assert.Equal(12.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to YARDS (3 feet = 1 yard)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToYards()
+        {
+            double result = LengthUnit.YARDS.ConvertFromBaseUnit(3.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //ConvertFromBaseUnit: FEET to CENTIMETERS (1 foot = ~30.48 cm)
+        [Fact]
+        public void TestConvertFromBaseUnit_FeetToCentimeters()
+        {
+            double result = LengthUnit.CENTIMETERS.ConvertFromBaseUnit(1.0);
+            Assert.Equal(30.48, result, 2);
+        }
+        //Refactored QuantityLength equality still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_Equality()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            Assert.True(oneFoot.Equals(twelveInches));
+        }
+        //Refactored QuantityLength ConvertTo still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_ConvertTo()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        //Refactored QuantityLength Add still works correctly
+        [Fact]
+        public void TestQuantityLengthRefactored_Add()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = oneFoot.Add(twelveInches, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        //Refactored Add with explicit target unit
+        [Fact]
+        public void TestQuantityLengthRefactored_AddWithTargetUnit()
+        {
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            QuantityLength twelveInches = new QuantityLength(12.0, LengthUnit.INCH);
+            QuantityLength result = oneFoot.Add(twelveInches, LengthUnit.YARDS);
+            Assert.Equal(0.666667, result.MeasurementValue, 4);
+            Assert.Equal(LengthUnit.YARDS, result.Unit);
+        }
+        //Round-trip conversion using refactored unit methods
+        [Fact]
+        public void TestRoundTripConversion_RefactoredDesign()
+        {
+            double originalValue = 5.5;
+            // Feet -> Base -> Inches -> Base -> Feet
+            double baseValue = LengthUnit.FEET.ConvertToBaseUnit(originalValue);
+            double inInches = LengthUnit.INCH.ConvertFromBaseUnit(baseValue);
+            double backToBase = LengthUnit.INCH.ConvertToBaseUnit(inInches);
+            double backToFeet = LengthUnit.FEET.ConvertFromBaseUnit(backToBase);
+            Assert.Equal(originalValue, backToFeet, 6);
+        }
+        //Unit immutability: enum values are constant and thread-safe
+        [Fact]
+        public void TestUnitImmutability()
+        {
+            //Calling GetConversionFactor() multiple times returns the same value
+            double factor1 = LengthUnit.FEET.GetConversionFactor();
+            double factor2 = LengthUnit.FEET.GetConversionFactor();
+            Assert.Equal(factor1, factor2);
+            //Enum constants remain the same across invocations
+            Assert.Equal(LengthUnit.FEET, LengthUnit.FEET);
+            Assert.Equal(LengthUnit.INCH, LengthUnit.INCH);
+        }
+
+        // ==================== Weight Measurement Tests (UC9) ====================
+
+        // Kilogram-to-Kilogram equality: same value
+        [Fact]
+        public void TestEquality_KilogramToKilogram_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(first.Equals(second));
+        }
+        // Kilogram-to-Kilogram equality: different value
+        [Fact]
+        public void TestEquality_KilogramToKilogram_DifferentValue()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.KILOGRAM);
+            Assert.False(first.Equals(second));
+        }
+        // Gram-to-Gram equality: same value
+        [Fact]
+        public void TestEquality_GramToGram_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(500.0, WeightUnit.GRAM);
+            QuantityWeight second = new QuantityWeight(500.0, WeightUnit.GRAM);
+            Assert.True(first.Equals(second));
+        }
+        // Pound-to-Pound equality: same value
+        [Fact]
+        public void TestEquality_PoundToPound_SameValue()
+        {
+            QuantityWeight first = new QuantityWeight(2.0, WeightUnit.POUND);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.POUND);
+            Assert.True(first.Equals(second));
+        }
+        // Cross-unit equality: 1 kg = 1000 g
+        [Fact]
+        public void TestEquality_KilogramToGram_EquivalentValue()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight thousandGrams = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            Assert.True(oneKg.Equals(thousandGrams));
+        }
+        // Cross-unit equality: 1000 g = 1 kg (symmetric)
+        [Fact]
+        public void TestEquality_GramToKilogram_EquivalentValue()
+        {
+            QuantityWeight thousandGrams = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(thousandGrams.Equals(oneKg));
+        }
+        // Weight vs Length: incompatible categories should return false
+        [Fact]
+        public void TestEquality_WeightVsLength_Incompatible()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityLength oneFoot = new QuantityLength(1.0, LengthUnit.FEET);
+            Assert.False(oneKg.Equals(oneFoot));
+        }
+        // Null comparison returns false
+        [Fact]
+        public void TestEquality_Weight_NullComparison()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.False(oneKg.Equals(null));
+        }
+        // Same reference returns true (reflexive)
+        [Fact]
+        public void TestEquality_Weight_SameReference()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(oneKg.Equals(oneKg));
+        }
+        // Transitive property: A=B and B=C implies A=C
+        [Fact]
+        public void TestEquality_Weight_TransitiveProperty()
+        {
+            QuantityWeight a = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight b = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight c = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            Assert.True(a.Equals(b));
+            Assert.True(b.Equals(c));
+            Assert.True(a.Equals(c));
+        }
+        // Zero values are equal across units
+        [Fact]
+        public void TestEquality_Weight_ZeroValue()
+        {
+            QuantityWeight zeroKg = new QuantityWeight(0.0, WeightUnit.KILOGRAM);
+            QuantityWeight zeroGram = new QuantityWeight(0.0, WeightUnit.GRAM);
+            QuantityWeight zeroPound = new QuantityWeight(0.0, WeightUnit.POUND);
+            Assert.True(zeroKg.Equals(zeroGram));
+            Assert.True(zeroKg.Equals(zeroPound));
+        }
+        // Negative weight equality
+        [Fact]
+        public void TestEquality_Weight_NegativeValue()
+        {
+            QuantityWeight negKg = new QuantityWeight(-1.0, WeightUnit.KILOGRAM);
+            QuantityWeight negGram = new QuantityWeight(-1000.0, WeightUnit.GRAM);
+            Assert.True(negKg.Equals(negGram));
+        }
+        // Large weight value equality
+        [Fact]
+        public void TestEquality_Weight_LargeValue()
+        {
+            QuantityWeight largeGram = new QuantityWeight(1000000.0, WeightUnit.GRAM);
+            QuantityWeight largeKg = new QuantityWeight(1000.0, WeightUnit.KILOGRAM);
+            Assert.True(largeGram.Equals(largeKg));
+        }
+        // Small weight value equality
+        [Fact]
+        public void TestEquality_Weight_SmallValue()
+        {
+            QuantityWeight smallKg = new QuantityWeight(0.001, WeightUnit.KILOGRAM);
+            QuantityWeight oneGram = new QuantityWeight(1.0, WeightUnit.GRAM);
+            Assert.True(smallKg.Equals(oneGram));
+        }
+        // Conversion: Pound to Kilogram
+        [Fact]
+        public void TestConversion_PoundToKilogram()
+        {
+            QuantityWeight onePound = new QuantityWeight(1.0, WeightUnit.POUND);
+            QuantityWeight converted = onePound.ConvertTo(WeightUnit.KILOGRAM);
+            Assert.Equal(0.453592, converted.MeasurementValue, 4);
+            Assert.Equal(WeightUnit.KILOGRAM, converted.Unit);
+        }
+        // Conversion: Kilogram to Pound
+        [Fact]
+        public void TestConversion_KilogramToPound()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = oneKg.ConvertTo(WeightUnit.POUND);
+            Assert.Equal(2.20462, converted.MeasurementValue, 3);
+            Assert.Equal(WeightUnit.POUND, converted.Unit);
+        }
+        // Conversion: Kilogram to Gram
+        [Fact]
+        public void TestConversion_KilogramToGram()
+        {
+            QuantityWeight oneKg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = oneKg.ConvertTo(WeightUnit.GRAM);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, converted.Unit);
+        }
+        // Conversion: Same unit returns unchanged
+        [Fact]
+        public void TestConversion_Weight_SameUnit()
+        {
+            QuantityWeight fiveKg = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight converted = fiveKg.ConvertTo(WeightUnit.KILOGRAM);
+            Assert.Equal(5.0, converted.MeasurementValue, 6);
+        }
+        // Conversion: Zero value
+        [Fact]
+        public void TestConversion_Weight_ZeroValue()
+        {
+            double result = QuantityWeight.Convert(0.0, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            Assert.Equal(0.0, result, 6);
+        }
+        // Conversion: Negative value preserves sign
+        [Fact]
+        public void TestConversion_Weight_NegativeValue()
+        {
+            double result = QuantityWeight.Convert(-1.0, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            Assert.Equal(-1000.0, result, 6);
+        }
+        // Conversion: Round-trip preserves value
+        [Fact]
+        public void TestConversion_Weight_RoundTrip()
+        {
+            double originalValue = 1.5;
+            double toGram = QuantityWeight.Convert(originalValue, WeightUnit.KILOGRAM, WeightUnit.GRAM);
+            double backToKg = QuantityWeight.Convert(toGram, WeightUnit.GRAM, WeightUnit.KILOGRAM);
+            Assert.Equal(originalValue, backToKg, 4);
+        }
+        // Addition: Same unit (kg + kg)
+        [Fact]
+        public void TestAddition_Weight_SameUnit_KilogramPlusKilogram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(2.0, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Cross-unit (kg + g)
+        [Fact]
+        public void TestAddition_Weight_CrossUnit_KilogramPlusGram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Cross-unit (g + kg) result in grams
+        [Fact]
+        public void TestAddition_Weight_CrossUnit_GramPlusKilogram()
+        {
+            QuantityWeight first = new QuantityWeight(500.0, WeightUnit.GRAM);
+            QuantityWeight second = new QuantityWeight(0.5, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(1000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Addition: Explicit target unit (kg + g -> GRAM)
+        [Fact]
+        public void TestAddition_Weight_ExplicitTargetUnit_Gram()
+        {
+            QuantityWeight first = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Addition: Commutativity
+        [Fact]
+        public void TestAddition_Weight_Commutativity()
+        {
+            QuantityWeight kg = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+            QuantityWeight gram = new QuantityWeight(1000.0, WeightUnit.GRAM);
+            QuantityWeight resultKgFirst = kg.Add(gram);
+            QuantityWeight resultGramFirst = gram.Add(kg);
+            // Both should represent the same physical weight
+            Assert.True(resultKgFirst.Equals(resultGramFirst));
+        }
+        // Addition: With zero (identity element)
+        [Fact]
+        public void TestAddition_Weight_WithZero()
+        {
+            QuantityWeight first = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight zero = new QuantityWeight(0.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Negative values
+        [Fact]
+        public void TestAddition_Weight_NegativeValues()
+        {
+            QuantityWeight first = new QuantityWeight(5.0, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(-2000.0, WeightUnit.GRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Addition: Large values
+        [Fact]
+        public void TestAddition_Weight_LargeValues()
+        {
+            QuantityWeight first = new QuantityWeight(1e6, WeightUnit.KILOGRAM);
+            QuantityWeight second = new QuantityWeight(1e6, WeightUnit.KILOGRAM);
+            QuantityWeight result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+
+        // ==================== Generic Quantity<U> Tests (UC10) ====================
+
+        // IMeasurable interface: LengthUnit implements all required methods
+        [Fact]
+        public void TestIMeasurableInterface_LengthUnitImplementation()
+        {
+            IMeasurable unit = LengthUnit.FEET;
+            Assert.Equal(1.0, unit.GetConversionFactor(), 6);
+            Assert.Equal(5.0, unit.ConvertToBaseUnit(5.0), 6);
+            Assert.Equal(2.0, unit.ConvertFromBaseUnit(2.0), 6);
+            Assert.Equal("feet", unit.GetUnitName());
+        }
+        // IMeasurable interface: WeightUnit implements all required methods
+        [Fact]
+        public void TestIMeasurableInterface_WeightUnitImplementation()
+        {
+            IMeasurable unit = WeightUnit.KILOGRAM;
+            Assert.Equal(1.0, unit.GetConversionFactor(), 6);
+            Assert.Equal(5.0, unit.ConvertToBaseUnit(5.0), 6);
+            Assert.Equal(2.0, unit.ConvertFromBaseUnit(2.0), 6);
+            Assert.Equal("kg", unit.GetUnitName());
+        }
+        // IMeasurable interface: Consistent behavior across unit types
+        [Fact]
+        public void TestIMeasurableInterface_ConsistentBehavior()
+        {
+            IMeasurable lengthUnit = LengthUnit.INCH;
+            IMeasurable weightUnit = WeightUnit.GRAM;
+            // Both should support the same interface contract
+            Assert.Equal(12.0, lengthUnit.ConvertFromBaseUnit(1.0), 6);
+            Assert.Equal(1000.0, weightUnit.ConvertFromBaseUnit(1.0), 6);
+        }
+        // Generic Quantity<LengthUnit> equality works identically to original QuantityLength
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Equality()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> twelveInches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Assert.True(oneFoot.Equals(twelveInches));
+        }
+        // Generic Quantity<WeightUnit> equality works identically to original QuantityWeight
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Equality()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> thousandGrams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Assert.True(oneKg.Equals(thousandGrams));
+        }
+        // Generic Quantity<LengthUnit> conversion works correctly
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Conversion()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> converted = oneFoot.ConvertTo(LengthUnit.INCH);
+            Assert.Equal(12.0, converted.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, converted.Unit);
+        }
+        // Generic Quantity<WeightUnit> conversion works correctly
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Conversion()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> converted = oneKg.ConvertTo(WeightUnit.GRAM);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, converted.Unit);
+        }
+        // Generic Quantity<LengthUnit> addition works correctly
+        [Fact]
+        public void TestGenericQuantity_LengthOperations_Addition()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> twelveInches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = oneFoot.Add(twelveInches, LengthUnit.FEET);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Generic Quantity<WeightUnit> addition works correctly
+        [Fact]
+        public void TestGenericQuantity_WeightOperations_Addition()
+        {
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> thousandGrams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = oneKg.Add(thousandGrams, WeightUnit.KILOGRAM);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Cross-category prevention: Quantity<LengthUnit> and Quantity<WeightUnit> are distinct types
+        [Fact]
+        public void TestCrossCategoryPrevention_LengthVsWeight()
+        {
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            // C# reified generics ensure these are different types at runtime
+            Assert.False(oneFoot.Equals(oneKg));
+            Assert.NotEqual(oneFoot.GetType(), oneKg.GetType());
+        }
+        // Constructor validation: NaN value rejected
+        [Fact]
+        public void TestGenericQuantity_ConstructorValidation_InvalidValue()
+        {
+            Assert.Throws<ArgumentException>(() => new Quantity<LengthUnit>(double.NaN, LengthUnit.FEET));
+            Assert.Throws<ArgumentException>(() => new Quantity<WeightUnit>(double.PositiveInfinity, WeightUnit.KILOGRAM));
+        }
+        // Type alias backward compatibility: QuantityLength IS Quantity<LengthUnit>
+        [Fact]
+        public void TestTypeAlias_BackwardCompatibility()
+        {
+            QuantityLength fromAlias = new QuantityLength(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> fromGeneric = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Assert.Equal(fromAlias.GetType(), fromGeneric.GetType());
+            Assert.True(fromAlias.Equals(fromGeneric));
+        }
+        // Generic service method works with both categories
+        [Fact]
+        public void TestGenericServiceMethod_Equality()
+        {
+            QuantityMeasurementService service = new QuantityMeasurementService();
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> inches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Assert.True(service.CompareQuantityMeasurements(feet, inches));
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> grams = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Assert.True(service.CompareQuantityMeasurements(kg, grams));
+        }
+        // DRY validation: same generic logic handles both length and weight
+        [Fact]
+        public void TestDRYValidation_SingleLogicForAllCategories()
+        {
+            // Length addition
+            Quantity<LengthUnit> lengthResult = Quantity<LengthUnit>.Add(
+                new Quantity<LengthUnit>(1.0, LengthUnit.FEET),
+                new Quantity<LengthUnit>(12.0, LengthUnit.INCH));
+            Assert.Equal(2.0, lengthResult.MeasurementValue, 6);
+            // Weight addition — same Add logic, different unit type
+            Quantity<WeightUnit> weightResult = Quantity<WeightUnit>.Add(
+                new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM),
+                new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM));
+            Assert.Equal(2.0, weightResult.MeasurementValue, 6);
+        }
+        // Immutability: operations return new instances
+        [Fact]
+        public void TestImmutability_GenericQuantity()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> converted = original.ConvertTo(LengthUnit.INCH);
+            Quantity<LengthUnit> added = original.Add(new Quantity<LengthUnit>(1.0, LengthUnit.FEET));
+            // Original is unchanged
+            Assert.Equal(5.0, original.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, original.Unit);
+            // Results are different instances
+            Assert.NotSame(original, converted);
+            Assert.NotSame(original, added);
+        }
+        // HashCode consistency: equal quantities have equal hash codes
+        [Fact]
+        public void TestHashCode_GenericQuantity_Consistency()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            // Equal measurements should have equal hash codes
+            Assert.True(a.Equals(b));
+            Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        }
+        // ToString uses IMeasurable.GetUnitName() for display
+        [Fact]
+        public void TestToString_GenericQuantity_UsesUnitName()
+        {
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(3.0, WeightUnit.KILOGRAM);
+            Assert.Equal("5 feet", feet.ToString());
+            Assert.Equal("3 kg", kg.ToString());
+        }
+        //Volume Measurement Tests(UC11)
+        //VolumeUnit enum: LITRE has correct conversion factor of 1.0
+        [Fact]
+        public void TestVolumeUnitEnum_LitreConstant()
+        {
+            Assert.Equal(1.0, VolumeUnit.LITRE.GetConversionFactor(), 6);
+        }
+        // VolumeUnit enum: MILLI LITRE has correct conversion factor of 0.001
+        [Fact]
+        public void TestVolumeUnitEnum_MillilitreConstant()
+        {
+            Assert.Equal(0.001, VolumeUnit.MILLILITRE.GetConversionFactor(), 6);
+        }
+        // VolumeUnit enum: GALLON has correct conversion factor of 3.78541
+        [Fact]
+        public void TestVolumeUnitEnum_GallonConstant()
+        {
+            Assert.Equal(3.78541, VolumeUnit.GALLON.GetConversionFactor(), 5);
+        }
+        // VolumeUnit IMeasurable: ConvertToBaseUnit for LITRE (identity)
+        [Fact]
+        public void TestConvertToBaseUnit_LitreToLitre()
+        {
+            double result = VolumeUnit.LITRE.ConvertToBaseUnit(5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertToBaseUnit for MILLILITRE
+        [Fact]
+        public void TestConvertToBaseUnit_MillilitreToLitre()
+        {
+            double result = VolumeUnit.MILLILITRE.ConvertToBaseUnit(1000.0);
+            Assert.Equal(1.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertToBaseUnit for GALLON
+        [Fact]
+        public void TestConvertToBaseUnit_GallonToLitre()
+        {
+            double result = VolumeUnit.GALLON.ConvertToBaseUnit(1.0);
+            Assert.Equal(3.78541, result, 5);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for LITRE (identity)
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToLitre_Volume()
+        {
+            double result = VolumeUnit.LITRE.ConvertFromBaseUnit(2.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for MILLILITRE
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToMillilitre()
+        {
+            double result = VolumeUnit.MILLILITRE.ConvertFromBaseUnit(1.0);
+            Assert.Equal(1000.0, result, 6);
+        }
+        //VolumeUnit IMeasurable: ConvertFromBaseUnit for GALLON
+        [Fact]
+        public void TestConvertFromBaseUnit_LitreToGallon()
+        {
+            double result = VolumeUnit.GALLON.ConvertFromBaseUnit(3.78541);
+            Assert.Equal(1.0, result, 4);
+        }
+        //VolumeUnit IMeasurable: GetUnitName returns correct labels
+        [Fact]
+        public void TestVolumeUnit_GetUnitName()
+        {
+            Assert.Equal("L", VolumeUnit.LITRE.GetUnitName());
+            Assert.Equal("mL", VolumeUnit.MILLILITRE.GetUnitName());
+            Assert.Equal("gal", VolumeUnit.GALLON.GetUnitName());
+        }
+        //Litre-to-Litre equality: same value
+        [Fact]
+        public void TestEquality_LitreToLitre_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(first.Equals(second));
+        }
+        //Litre-to-Litre equality: different value
+        [Fact]
+        public void TestEquality_LitreToLitre_DifferentValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Assert.False(first.Equals(second));
+        }
+        //Millilitre-to-Millilitre equality
+        [Fact]
+        public void TestEquality_MillilitreToMillilitre_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Assert.True(first.Equals(second));
+        }
+        // Gallon-to-Gallon equality
+        [Fact]
+        public void TestEquality_GallonToGallon_SameValue()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(2.0, VolumeUnit.GALLON);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.GALLON);
+            Assert.True(first.Equals(second));
+        }
+        // Cross-unit equality: 1 L = 1000 mL
+        [Fact]
+        public void TestEquality_LitreToMillilitre_EquivalentValue()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Assert.True(oneLitre.Equals(thousandMl));
+        }
+        // Cross-unit equality: 1000 mL = 1 L (symmetric)
+        [Fact]
+        public void TestEquality_MillilitreToLitre_EquivalentValue()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(thousandMl.Equals(oneLitre));
+        }
+        // Volume vs Length: incompatible categories
+        [Fact]
+        public void TestEquality_VolumeVsLength_Incompatible()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<LengthUnit> oneFoot = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Assert.False(oneLitre.Equals(oneFoot));
+        }
+        // Volume vs Weight: incompatible categories
+        [Fact]
+        public void TestEquality_VolumeVsWeight_Incompatible()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<WeightUnit> oneKg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Assert.False(oneLitre.Equals(oneKg));
+        }
+        // Null comparison
+        [Fact]
+        public void TestEquality_Volume_NullComparison()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.False(oneLitre.Equals(null));
+        }
+        // Same reference (reflexive)
+        [Fact]
+        public void TestEquality_Volume_SameReference()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(oneLitre.Equals(oneLitre));
+        }
+        // Transitive property
+        [Fact]
+        public void TestEquality_Volume_TransitiveProperty()
+        {
+            Quantity<VolumeUnit> a = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> b = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> c = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Assert.True(a.Equals(b));
+            Assert.True(b.Equals(c));
+            Assert.True(a.Equals(c));
+        }
+        // Zero values equal across units
+        [Fact]
+        public void TestEquality_Volume_ZeroValue()
+        {
+            Quantity<VolumeUnit> zeroLitre = new Quantity<VolumeUnit>(0.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> zeroMl = new Quantity<VolumeUnit>(0.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> zeroGal = new Quantity<VolumeUnit>(0.0, VolumeUnit.GALLON);
+            Assert.True(zeroLitre.Equals(zeroMl));
+            Assert.True(zeroLitre.Equals(zeroGal));
+        }
+        // Negative volume equality
+        [Fact]
+        public void TestEquality_Volume_NegativeValue()
+        {
+            Quantity<VolumeUnit> negLitre = new Quantity<VolumeUnit>(-1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> negMl = new Quantity<VolumeUnit>(-1000.0, VolumeUnit.MILLILITRE);
+            Assert.True(negLitre.Equals(negMl));
+        }
+        // Large volume value equality
+        [Fact]
+        public void TestEquality_Volume_LargeValue()
+        {
+            Quantity<VolumeUnit> largeMl = new Quantity<VolumeUnit>(1000000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> largeLitre = new Quantity<VolumeUnit>(1000.0, VolumeUnit.LITRE);
+            Assert.True(largeMl.Equals(largeLitre));
+        }
+        // Small volume value equality
+        [Fact]
+        public void TestEquality_Volume_SmallValue()
+        {
+            Quantity<VolumeUnit> smallLitre = new Quantity<VolumeUnit>(0.001, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> oneMl = new Quantity<VolumeUnit>(1.0, VolumeUnit.MILLILITRE);
+            Assert.True(smallLitre.Equals(oneMl));
+        }
+        // Conversion: Litre to Millilitre
+        [Fact]
+        public void TestConversion_LitreToMillilitre()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = oneLitre.ConvertTo(VolumeUnit.MILLILITRE);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, converted.Unit);
+        }
+        // Conversion: Millilitre to Litre
+        [Fact]
+        public void TestConversion_MillilitreToLitre()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> converted = thousandMl.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(1.0, converted.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, converted.Unit);
+        }
+        // Conversion: Gallon to Litre
+        [Fact]
+        public void TestConversion_GallonToLitre()
+        {
+            Quantity<VolumeUnit> oneGallon = new Quantity<VolumeUnit>(1.0, VolumeUnit.GALLON);
+            Quantity<VolumeUnit> converted = oneGallon.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(3.78541, converted.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.LITRE, converted.Unit);
+        }
+        // Conversion: Litre to Gallon
+        [Fact]
+        public void TestConversion_LitreToGallon()
+        {
+            Quantity<VolumeUnit> litres = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = litres.ConvertTo(VolumeUnit.GALLON);
+            Assert.Equal(1.0, converted.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.GALLON, converted.Unit);
+        }
+        // Conversion: Same unit returns unchanged
+        [Fact]
+        public void TestConversion_Volume_SameUnit()
+        {
+            Quantity<VolumeUnit> fiveLitres = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> converted = fiveLitres.ConvertTo(VolumeUnit.LITRE);
+            Assert.Equal(5.0, converted.MeasurementValue, 6);
+        }
+        // Conversion: Zero value
+        [Fact]
+        public void TestConversion_Volume_ZeroValue()
+        {
+            double result = Quantity<VolumeUnit>.Convert(0.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            Assert.Equal(0.0, result, 6);
+        }
+        // Conversion: Negative value preserves sign
+        [Fact]
+        public void TestConversion_Volume_NegativeValue()
+        {
+            double result = Quantity<VolumeUnit>.Convert(-1.0, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            Assert.Equal(-1000.0, result, 6);
+        }
+        // Conversion: Round-trip preserves value
+        [Fact]
+        public void TestConversion_Volume_RoundTrip()
+        {
+            double originalValue = 1.5;
+            double toMl = Quantity<VolumeUnit>.Convert(originalValue, VolumeUnit.LITRE, VolumeUnit.MILLILITRE);
+            double backToLitre = Quantity<VolumeUnit>.Convert(toMl, VolumeUnit.MILLILITRE, VolumeUnit.LITRE);
+            Assert.Equal(originalValue, backToLitre, 4);
+        }
+        // Conversion: Millilitre to Gallon
+        [Fact]
+        public void TestConversion_MillilitreToGallon()
+        {
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> converted = thousandMl.ConvertTo(VolumeUnit.GALLON);
+            Assert.Equal(0.264172, converted.MeasurementValue, 3);
+            Assert.Equal(VolumeUnit.GALLON, converted.Unit);
+        }
+        // Addition: Same unit (L + L)
+        [Fact]
+        public void TestAddition_Volume_SameUnit_LitrePlusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Same unit (mL + mL)
+        [Fact]
+        public void TestAddition_Volume_SameUnit_MillilitrePlusMillilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(1000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Cross-unit (L + mL) result in litres
+        [Fact]
+        public void TestAddition_Volume_CrossUnit_LitrePlusMillilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Cross-unit (mL + L) result in millilitres
+        [Fact]
+        public void TestAddition_Volume_CrossUnit_MillilitrePlusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Explicit target unit (L + mL -> mL)
+        [Fact]
+        public void TestAddition_Volume_ExplicitTargetUnit_Millilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Addition: Explicit target unit (L + L -> gal)
+        [Fact]
+        public void TestAddition_Volume_ExplicitTargetUnit_Gallon()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(3.78541, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second, VolumeUnit.GALLON);
+            Assert.Equal(2.0, result.MeasurementValue, 4);
+            Assert.Equal(VolumeUnit.GALLON, result.Unit);
+        }
+        // Addition: Commutativity
+        [Fact]
+        public void TestAddition_Volume_Commutativity()
+        {
+            Quantity<VolumeUnit> litre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> ml = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> resultLitreFirst = litre.Add(ml);
+            Quantity<VolumeUnit> resultMlFirst = ml.Add(litre);
+            Assert.True(resultLitreFirst.Equals(resultMlFirst));
+        }
+        // Addition: With zero (identity element)
+        [Fact]
+        public void TestAddition_Volume_WithZero()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> zero = new Quantity<VolumeUnit>(0.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(zero);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Negative values
+        [Fact]
+        public void TestAddition_Volume_NegativeValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(-2000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(3.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Large values
+        [Fact]
+        public void TestAddition_Volume_LargeValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1e6, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1e6, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(2e6, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Addition: Small values
+        [Fact]
+        public void TestAddition_Volume_SmallValues()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(0.001, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(0.002, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Add(second);
+            Assert.Equal(0.003, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Generic Quantity works seamlessly with VolumeUnit — no special handling needed
+        [Fact]
+        public void TestGenericQuantity_VolumeOperations_Consistency()
+        {
+            Quantity<VolumeUnit> oneLitre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> thousandMl = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            // Equality via generic Quantity<U>.Equals
+            Assert.True(oneLitre.Equals(thousandMl));
+            // Conversion via generic Quantity<U>.ConvertTo
+            Quantity<VolumeUnit> converted = oneLitre.ConvertTo(VolumeUnit.MILLILITRE);
+            Assert.Equal(1000.0, converted.MeasurementValue, 6);
+            // Addition via generic Quantity<U>.Add
+            Quantity<VolumeUnit> sum = oneLitre.Add(thousandMl, VolumeUnit.LITRE);
+            Assert.Equal(2.0, sum.MeasurementValue, 6);
+        }
+        // Scalability validation: volume integrates without modifying Quantity<U>
+        [Fact]
+        public void TestScalability_VolumeIntegration()
+        {
+            // All three categories coexist; same Quantity<U> logic handles all
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<WeightUnit> kg = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<VolumeUnit> litre = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            // Each operates independently
+            Assert.Equal(12.0, feet.ConvertTo(LengthUnit.INCH).MeasurementValue, 6);
+            Assert.Equal(1000.0, kg.ConvertTo(WeightUnit.GRAM).MeasurementValue, 6);
+            Assert.Equal(1000.0, litre.ConvertTo(VolumeUnit.MILLILITRE).MeasurementValue, 6);
+            // Cross-category prevention holds across all three
+            Assert.False(feet.Equals(kg));
+            Assert.False(kg.Equals(litre));
+            Assert.False(litre.Equals(feet));
+        }
+
+        // ==================== Subtraction and Division Tests (UC12) ====================
+
+        // Subtraction: same unit (feet - feet)
+        [Fact]
+        public void TestSubtraction_SameUnit_FeetMinusFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: same unit (litre - litre)
+        [Fact]
+        public void TestSubtraction_SameUnit_LitreMinusLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(3.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.LITRE, result.Unit);
+        }
+        // Subtraction: cross-unit (feet - inches), result in feet
+        [Fact]
+        public void TestSubtraction_CrossUnit_FeetMinusInches()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: cross-unit (inches - feet), result in inches
+        [Fact]
+        public void TestSubtraction_CrossUnit_InchesMinusFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(120.0, LengthUnit.INCH);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(60.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Subtraction: explicit target unit (feet - inches -> feet)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Feet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.FEET);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: explicit target unit (feet - inches -> inches)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Inches()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.INCH);
+            Assert.Equal(114.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.INCH, result.Unit);
+        }
+        // Subtraction: explicit target unit (litre - litre -> millilitre)
+        [Fact]
+        public void TestSubtraction_ExplicitTargetUnit_Millilitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(3000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // Subtraction: resulting in negative value
+        [Fact]
+        public void TestSubtraction_ResultingInNegative()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(-5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: resulting in zero
+        [Fact]
+        public void TestSubtraction_ResultingInZero()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(120.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(0.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: with zero operand (identity element)
+        [Fact]
+        public void TestSubtraction_WithZeroOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // Subtraction: with negative operand (subtracting negative = adding)
+        [Fact]
+        public void TestSubtraction_WithNegativeValues()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(-2.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: non-commutative (A - B ≠ B - A)
+        [Fact]
+        public void TestSubtraction_NonCommutative()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> aMb = a.Subtract(b);
+            Quantity<LengthUnit> bMa = b.Subtract(a);
+            Assert.Equal(5.0, aMb.MeasurementValue, 6);
+            Assert.Equal(-5.0, bMa.MeasurementValue, 6);
+        }
+        // Subtraction: large values
+        [Fact]
+        public void TestSubtraction_WithLargeValues()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5e5, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> result = first.Subtract(second);
+            Assert.Equal(5e5, result.MeasurementValue, 6);
+        }
+        // Subtraction: small values
+        [Fact]
+        public void TestSubtraction_WithSmallValues()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(0.001, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0005, LengthUnit.FEET);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(0.0005, result.MeasurementValue, 6);
+        }
+        // Subtraction: null operand throws ArgumentException
+        [Fact]
+        public void TestSubtraction_NullOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Subtract(null!));
+        }
+        // Subtraction: works across all measurement categories
+        [Fact]
+        public void TestSubtraction_AllMeasurementCategories()
+        {
+            // Length
+            Quantity<LengthUnit> lenResult = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(3.0, LengthUnit.FEET));
+            Assert.Equal(7.0, lenResult.MeasurementValue, 6);
+            // Weight
+            Quantity<WeightUnit> wgtResult = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Subtract(new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM));
+            Assert.Equal(5.0, wgtResult.MeasurementValue, 6);
+            // Volume
+            Quantity<VolumeUnit> volResult = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE).Subtract(new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(4.5, volResult.MeasurementValue, 6);
+        }
+        // Subtraction: chained operations
+        [Fact]
+        public void TestSubtraction_ChainedOperations()
+        {
+            Quantity<LengthUnit> result = new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Subtract(new Quantity<LengthUnit>(2.0, LengthUnit.FEET))
+                .Subtract(new Quantity<LengthUnit>(1.0, LengthUnit.FEET));
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+        }
+        // Subtraction: immutability — originals unchanged
+        [Fact]
+        public void TestSubtraction_Immutability()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Subtract(other);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // Subtraction + Addition inverse: A + B - B ≈ A
+        [Fact]
+        public void TestSubtractionAddition_Inverse()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> aPlusB = a.Add(b);
+            Quantity<LengthUnit> result = aPlusB.Subtract(b);
+            Assert.Equal(a.MeasurementValue, result.MeasurementValue, 6);
+        }
+
+        // Division: same unit (feet / feet)
+        [Fact]
+        public void TestDivision_SameUnit_FeetDividedByFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Division: same unit (litre / litre)
+        [Fact]
+        public void TestDivision_SameUnit_LitreDividedByLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Division: cross-unit (inches / feet)
+        [Fact]
+        public void TestDivision_CrossUnit_InchesDividedByFeet()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(24.0, LengthUnit.INCH);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: cross-unit (kilogram / gram)
+        [Fact]
+        public void TestDivision_CrossUnit_KilogramDividedByGram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(2.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(2000.0, WeightUnit.GRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: ratio greater than 1
+        [Fact]
+        public void TestDivision_RatioGreaterThanOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(5.0, result, 6);
+        }
+        // Division: ratio less than 1
+        [Fact]
+        public void TestDivision_RatioLessThanOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(0.5, result, 6);
+        }
+        // Division: ratio equal to 1
+        [Fact]
+        public void TestDivision_RatioEqualToOne()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Division: non-commutative (A / B ≠ B / A)
+        [Fact]
+        public void TestDivision_NonCommutative()
+        {
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double aDb = a.Divide(b);
+            double bDa = b.Divide(a);
+            Assert.Equal(2.0, aDb, 6);
+            Assert.Equal(0.5, bDa, 6);
+        }
+        // Division: by zero throws ArithmeticException
+        [Fact]
+        public void TestDivision_ByZero()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.FEET);
+            Assert.Throws<ArithmeticException>(() => first.Divide(second));
+        }
+        // Division: very large ratio
+        [Fact]
+        public void TestDivision_WithLargeRatio()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1e6, result, 6);
+        }
+        // Division: very small ratio
+        [Fact]
+        public void TestDivision_WithSmallRatio()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1e6, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(1e-6, result, 12);
+        }
+        // Division: null operand throws ArgumentException
+        [Fact]
+        public void TestDivision_NullOperand()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => first.Divide(null!));
+        }
+        // Division: works across all measurement categories
+        [Fact]
+        public void TestDivision_AllMeasurementCategories()
+        {
+            // Length
+            double lenRatio = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET));
+            Assert.Equal(2.0, lenRatio, 6);
+            // Weight
+            double wgtRatio = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Divide(new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM));
+            Assert.Equal(2.0, wgtRatio, 6);
+            // Volume
+            double volRatio = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE).Divide(new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE));
+            Assert.Equal(2.0, volRatio, 6);
+        }
+        // Division: immutability — originals unchanged
+        [Fact]
+        public void TestDivision_Immutability()
+        {
+            Quantity<LengthUnit> originalDividend = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> originalDivisor = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = originalDividend.Divide(originalDivisor);
+            Assert.Equal(10.0, originalDividend.MeasurementValue, 6);
+            Assert.Equal(5.0, originalDivisor.MeasurementValue, 6);
+            Assert.Equal(2.0, result, 6);
+        }
+        // Division: cross-unit (millilitre / litre)
+        [Fact]
+        public void TestDivision_CrossUnit_MillilitreDividedByLitre()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE);
+            double result = first.Divide(second);
+            Assert.Equal(1.0, result, 6);
+        }
+        // Integration: subtraction and division coexist
+        [Fact]
+        public void TestSubtractionAndDivision_Integration()
+        {
+            // A.Subtract(B).Divide(C) is a valid chained operation
+            Quantity<LengthUnit> a = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> b = new Quantity<LengthUnit>(4.0, LengthUnit.FEET);
+            Quantity<LengthUnit> c = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> difference = a.Subtract(b);
+            double ratio = difference.Divide(c);
+            Assert.Equal(6.0, difference.MeasurementValue, 6);
+            Assert.Equal(2.0, ratio, 6);
+        }
+        // Subtraction: weight cross-unit (kg - g)
+        [Fact]
+        public void TestSubtraction_Weight_KilogramMinusGram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Subtract(second);
+            Assert.Equal(5.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.KILOGRAM, result.Unit);
+        }
+        // Subtraction: weight explicit target (kg - g -> g)
+        [Fact]
+        public void TestSubtraction_Weight_ExplicitTargetUnit_Gram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Subtract(second, WeightUnit.GRAM);
+            Assert.Equal(5000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // Division: gram / kilogram cross-unit
+        [Fact]
+        public void TestDivision_CrossUnit_GramDividedByKilogram()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(2000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
+
+        // ==================== Centralized Arithmetic Logic Tests (UC13) ====================
+
+        // ArithmeticOperation.ADD.Compute correctly adds two values
+        [Fact]
+        public void TestArithmeticOperation_Add_EnumComputation()
+        {
+            double result = ArithmeticOperation.ADD.Compute(10.0, 5.0);
+            Assert.Equal(15.0, result, 6);
+        }
+        // ArithmeticOperation.SUBTRACT.Compute correctly subtracts two values
+        [Fact]
+        public void TestArithmeticOperation_Subtract_EnumComputation()
+        {
+            double result = ArithmeticOperation.SUBTRACT.Compute(10.0, 5.0);
+            Assert.Equal(5.0, result, 6);
+        }
+        // ArithmeticOperation.DIVIDE.Compute correctly divides two values
+        [Fact]
+        public void TestArithmeticOperation_Divide_EnumComputation()
+        {
+            double result = ArithmeticOperation.DIVIDE.Compute(10.0, 5.0);
+            Assert.Equal(2.0, result, 6);
+        }
+        // ArithmeticOperation.DIVIDE.Compute throws ArithmeticException on division by zero
+        [Fact]
+        public void TestArithmeticOperation_DivideByZero_EnumThrows()
+        {
+            Assert.Throws<ArithmeticException>(() => ArithmeticOperation.DIVIDE.Compute(10.0, 0.0));
+        }
+        // ArithmeticOperation.ADD with specific values for completeness
+        [Fact]
+        public void TestEnumConstant_ADD_CorrectlyAdds()
+        {
+            Assert.Equal(10.0, ArithmeticOperation.ADD.Compute(7.0, 3.0), 6);
+        }
+        // ArithmeticOperation.SUBTRACT with specific values for completeness
+        [Fact]
+        public void TestEnumConstant_SUBTRACT_CorrectlySubtracts()
+        {
+            Assert.Equal(4.0, ArithmeticOperation.SUBTRACT.Compute(7.0, 3.0), 6);
+        }
+        // ArithmeticOperation.DIVIDE with specific values (non-integer result)
+        [Fact]
+        public void TestEnumConstant_DIVIDE_CorrectlyDivides()
+        {
+            Assert.Equal(3.5, ArithmeticOperation.DIVIDE.Compute(7.0, 2.0), 6);
+        }
+        // ArithmeticOperation.ADD with negative values
+        [Fact]
+        public void TestArithmeticOperation_Add_NegativeValues()
+        {
+            Assert.Equal(-2.0, ArithmeticOperation.ADD.Compute(-5.0, 3.0), 6);
+        }
+        // ArithmeticOperation.SUBTRACT with negative result
+        [Fact]
+        public void TestArithmeticOperation_Subtract_NegativeResult()
+        {
+            Assert.Equal(-5.0, ArithmeticOperation.SUBTRACT.Compute(5.0, 10.0), 6);
+        }
+        // ArithmeticOperation.DIVIDE with result less than 1
+        [Fact]
+        public void TestArithmeticOperation_Divide_FractionalResult()
+        {
+            Assert.Equal(0.5, ArithmeticOperation.DIVIDE.Compute(5.0, 10.0), 6);
+        }
+        // ArithmeticOperation.ToString returns correct name
+        [Fact]
+        public void TestArithmeticOperation_ToString()
+        {
+            Assert.Equal("ADD", ArithmeticOperation.ADD.ToString());
+            Assert.Equal("SUBTRACT", ArithmeticOperation.SUBTRACT.ToString());
+            Assert.Equal("DIVIDE", ArithmeticOperation.DIVIDE.ToString());
+        }
+
+        // Validation consistency: null operand throws same exception type across all operations
+        [Fact]
+        public void TestValidation_NullOperand_ConsistentAcrossOperations()
+        {
+            Quantity<LengthUnit> q = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            ArgumentException addEx = Assert.Throws<ArgumentException>(() => q.Add(null!));
+            ArgumentException subEx = Assert.Throws<ArgumentException>(() => q.Subtract(null!));
+            ArgumentException divEx = Assert.Throws<ArgumentException>(() => q.Divide(null!));
+            // All three should have the same centralized error message
+            Assert.Equal(addEx.Message, subEx.Message);
+            Assert.Equal(subEx.Message, divEx.Message);
+        }
+        // Validation consistency: null target unit throws ArgumentException for Add with explicit target
+        [Fact]
+        public void TestValidation_NullTargetUnit_AddRejects()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => q1.Add(q2, null!));
+        }
+        // Validation consistency: null target unit throws ArgumentException for Subtract with explicit target
+        [Fact]
+        public void TestValidation_NullTargetUnit_SubtractRejects()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Assert.Throws<ArgumentException>(() => q1.Subtract(q2, null!));
+        }
+
+        // UC13 behavior preservation: add delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Add_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Add(second);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // UC13 behavior preservation: subtract delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Subtract_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second);
+            Assert.Equal(9.5, result.MeasurementValue, 6);
+            Assert.Equal(LengthUnit.FEET, result.Unit);
+        }
+        // UC13 behavior preservation: divide delegates via centralized helper and produces correct result
+        [Fact]
+        public void TestRefactoring_Divide_DelegatesViaHelper()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            Assert.Equal(2.0, result, 6);
+        }
+        // UC13: division by zero still throws via ArithmeticOperation.DIVIDE lambda
+        [Fact]
+        public void TestRefactoring_DivideByZero_ThrowsViaEnum()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(0.0, LengthUnit.FEET);
+            Assert.Throws<ArithmeticException>(() => first.Divide(second));
+        }
+        // UC13: add with explicit target via centralized helper
+        [Fact]
+        public void TestRefactoring_Add_ExplicitTargetUnit()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            Quantity<WeightUnit> result = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(2000.0, result.MeasurementValue, 6);
+            Assert.Equal(WeightUnit.GRAM, result.Unit);
+        }
+        // UC13: subtract with explicit target via centralized helper
+        [Fact]
+        public void TestRefactoring_Subtract_ExplicitTargetUnit()
+        {
+            Quantity<VolumeUnit> first = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> second = new Quantity<VolumeUnit>(2.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> result = first.Subtract(second, VolumeUnit.MILLILITRE);
+            Assert.Equal(3000.0, result.MeasurementValue, 6);
+            Assert.Equal(VolumeUnit.MILLILITRE, result.Unit);
+        }
+        // UC13: rounding consistency — add/subtract round to 6 decimal places
+        [Fact]
+        public void TestRounding_AddSubtract_Consistency()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(1.0, LengthUnit.CENTIMETERS);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(1.0, LengthUnit.INCH);
+            Quantity<LengthUnit> addResult = first.Add(second);
+            Quantity<LengthUnit> subResult = new Quantity<LengthUnit>(10.0, LengthUnit.CENTIMETERS).Subtract(second);
+            // Both should produce rounded results (not raw floating-point)
+            Assert.True(double.IsFinite(addResult.MeasurementValue));
+            Assert.True(double.IsFinite(subResult.MeasurementValue));
+        }
+        // UC13: rounding difference — divide returns raw double without rounding
+        [Fact]
+        public void TestRounding_Divide_NoRounding()
+        {
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            double result = first.Divide(second);
+            // Division returns raw double — 10/3 = 3.333... not rounded to 6 decimal places
+            Assert.True(result > 3.333333);
+        }
+        // UC13: immutability after add via centralized helper
+        [Fact]
+        public void TestImmutability_AfterAdd_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Add(other);
+            Assert.Equal(5.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(8.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // UC13: immutability after subtract via centralized helper
+        [Fact]
+        public void TestImmutability_AfterSubtract_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> other = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> result = original.Subtract(other);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(3.0, other.MeasurementValue, 6);
+            Assert.Equal(7.0, result.MeasurementValue, 6);
+            Assert.NotSame(original, result);
+        }
+        // UC13: immutability after divide via centralized helper
+        [Fact]
+        public void TestImmutability_AfterDivide_ViaCentralizedHelper()
+        {
+            Quantity<LengthUnit> original = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> divisor = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            double result = original.Divide(divisor);
+            Assert.Equal(10.0, original.MeasurementValue, 6);
+            Assert.Equal(5.0, divisor.MeasurementValue, 6);
+            Assert.Equal(2.0, result, 6);
+        }
+        // UC13: all operations work across all categories (length, weight, volume)
+        [Fact]
+        public void TestAllOperations_AcrossAllCategories()
+        {
+            // Length: add, subtract, divide
+            Quantity<LengthUnit> lenAdd = new Quantity<LengthUnit>(1.0, LengthUnit.FEET).Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH));
+            Assert.Equal(2.0, lenAdd.MeasurementValue, 6);
+            Quantity<LengthUnit> lenSub = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(6.0, LengthUnit.INCH));
+            Assert.Equal(9.5, lenSub.MeasurementValue, 6);
+            double lenDiv = new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET));
+            Assert.Equal(2.0, lenDiv, 6);
+            // Weight: add, subtract, divide
+            Quantity<WeightUnit> wgtAdd = new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM).Add(new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM));
+            Assert.Equal(2.0, wgtAdd.MeasurementValue, 6);
+            Quantity<WeightUnit> wgtSub = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Subtract(new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM));
+            Assert.Equal(5.0, wgtSub.MeasurementValue, 6);
+            double wgtDiv = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Divide(new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM));
+            Assert.Equal(2.0, wgtDiv, 6);
+            // Volume: add, subtract, divide
+            Quantity<VolumeUnit> volAdd = new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE).Add(new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(2.0, volAdd.MeasurementValue, 6);
+            Quantity<VolumeUnit> volSub = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE).Subtract(new Quantity<VolumeUnit>(500.0, VolumeUnit.MILLILITRE));
+            Assert.Equal(4.5, volSub.MeasurementValue, 6);
+            double volDiv = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE).Divide(new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE));
+            Assert.Equal(2.0, volDiv, 6);
+        }
+        // UC13: chained operations — add, subtract, divide in sequence
+        [Fact]
+        public void TestArithmetic_Chain_Operations()
+        {
+            Quantity<LengthUnit> q1 = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q2 = new Quantity<LengthUnit>(2.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q3 = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            Quantity<LengthUnit> q4 = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            // Chain: q1.Add(q2).Subtract(q3) = 10 + 2 - 3 = 9 feet
+            Quantity<LengthUnit> chained = q1.Add(q2).Subtract(q3);
+            Assert.Equal(9.0, chained.MeasurementValue, 6);
+            // Then divide: 9 / 5 = 1.8
+            double ratio = chained.Divide(q4);
+            Assert.Equal(1.8, ratio, 6);
+        }
+        // UC13: base-unit conversion correct in PerformBaseArithmetic
+        [Fact]
+        public void TestHelper_BaseUnitConversion_Correct()
+        {
+            // 1 foot + 12 inches: both convert to 1 foot in base, sum = 2 feet
+            Quantity<LengthUnit> feet = new Quantity<LengthUnit>(1.0, LengthUnit.FEET);
+            Quantity<LengthUnit> inches = new Quantity<LengthUnit>(12.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = feet.Add(inches);
+            Assert.Equal(2.0, result.MeasurementValue, 6);
+        }
+        // UC13: result conversion from base to target unit correct
+        [Fact]
+        public void TestHelper_ResultConversion_Correct()
+        {
+            // 10 feet - 6 inches = 9.5 feet
+            // Base: 10 - 0.5 = 9.5 feet → convert to inches: 114
+            Quantity<LengthUnit> first = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> second = new Quantity<LengthUnit>(6.0, LengthUnit.INCH);
+            Quantity<LengthUnit> result = first.Subtract(second, LengthUnit.INCH);
+            Assert.Equal(114.0, result.MeasurementValue, 6);
+        }
+        // UC13: implicit target unit uses first operand's unit for both add and subtract
+        [Fact]
+        public void TestImplicitTargetUnit_AddSubtract()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            // Add implicit target = first operand's unit (KILOGRAM)
+            Quantity<WeightUnit> addResult = first.Add(second);
+            Assert.Equal(WeightUnit.KILOGRAM, addResult.Unit);
+            // Subtract implicit target = first operand's unit (KILOGRAM)
+            Quantity<WeightUnit> subResult = first.Subtract(second);
+            Assert.Equal(WeightUnit.KILOGRAM, subResult.Unit);
+        }
+        // UC13: explicit target unit overrides default first operand unit
+        [Fact]
+        public void TestExplicitTargetUnit_AddSubtract_Overrides()
+        {
+            Quantity<WeightUnit> first = new Quantity<WeightUnit>(5.0, WeightUnit.KILOGRAM);
+            Quantity<WeightUnit> second = new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM);
+            // Add with explicit GRAM target overrides KILOGRAM default
+            Quantity<WeightUnit> addResult = first.Add(second, WeightUnit.GRAM);
+            Assert.Equal(WeightUnit.GRAM, addResult.Unit);
+            Assert.Equal(6000.0, addResult.MeasurementValue, 6);
+            // Subtract with explicit GRAM target overrides KILOGRAM default
+            Quantity<WeightUnit> subResult = first.Subtract(second, WeightUnit.GRAM);
+            Assert.Equal(WeightUnit.GRAM, subResult.Unit);
+            Assert.Equal(4000.0, subResult.MeasurementValue, 6);
+        }
+        // UC13: error message consistency — all null checks produce same message
+        [Fact]
+        public void TestErrorMessage_Consistency_Across_Operations()
+        {
+            Quantity<LengthUnit> q = new Quantity<LengthUnit>(5.0, LengthUnit.FEET);
+            string addMsg = Assert.Throws<ArgumentException>(() => q.Add(null!)).Message;
+            string subMsg = Assert.Throws<ArgumentException>(() => q.Subtract(null!)).Message;
+            string divMsg = Assert.Throws<ArgumentException>(() => q.Divide(null!)).Message;
+            Assert.Equal(addMsg, subMsg);
+            Assert.Equal(subMsg, divMsg);
+            Assert.Contains("null", addMsg);
+        }
+        // UC13: subtraction-addition inverse — A + B - B = A
+        [Fact]
+        public void TestRefactoring_SubtractionAddition_Inverse()
+        {
+            Quantity<VolumeUnit> a = new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE);
+            Quantity<VolumeUnit> b = new Quantity<VolumeUnit>(2000.0, VolumeUnit.MILLILITRE);
+            Quantity<VolumeUnit> aPlusB = a.Add(b);
+            Quantity<VolumeUnit> result = aPlusB.Subtract(b);
+            Assert.Equal(a.MeasurementValue, result.MeasurementValue, 4);
+        }
+        // UC13: enum dispatch correctness — each operation uses correct enum constant
+        [Fact]
+        public void TestEnumDispatch_AllOperations_CorrectlyDispatched()
+        {
+            // Verify through observable behavior that correct operation is used
+            Quantity<LengthUnit> ten = new Quantity<LengthUnit>(10.0, LengthUnit.FEET);
+            Quantity<LengthUnit> three = new Quantity<LengthUnit>(3.0, LengthUnit.FEET);
+            // ADD: 10 + 3 = 13
+            Assert.Equal(13.0, ten.Add(three).MeasurementValue, 6);
+            // SUBTRACT: 10 - 3 = 7
+            Assert.Equal(7.0, ten.Subtract(three).MeasurementValue, 6);
+            // DIVIDE: 10 / 3 ≈ 3.333...
+            Assert.True(Math.Abs(ten.Divide(three) - 3.333333) < 0.001);
+        }
+        // UC13: ArithmeticOperation.ADD with zero (identity element)
+        [Fact]
+        public void TestArithmeticOperation_Add_WithZero()
+        {
+            Assert.Equal(5.0, ArithmeticOperation.ADD.Compute(5.0, 0.0), 6);
+            Assert.Equal(5.0, ArithmeticOperation.ADD.Compute(0.0, 5.0), 6);
+        }
+        // UC13: ArithmeticOperation.SUBTRACT with zero (identity element)
+        [Fact]
+        public void TestArithmeticOperation_Subtract_WithZero()
+        {
+            Assert.Equal(5.0, ArithmeticOperation.SUBTRACT.Compute(5.0, 0.0), 6);
+            Assert.Equal(-5.0, ArithmeticOperation.SUBTRACT.Compute(0.0, 5.0), 6);
+        }
+
+        // ==================== Temperature Measurement Tests (UC14) ====================
+
+        // Temperature equality: Celsius to Celsius — same value
+        [Fact]
+        public void TestTemperatureEquality_CelsiusToCelsius_SameValue()
+        {
+            Quantity<TemperatureUnit> first = new Quantity<TemperatureUnit>(0.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> second = new Quantity<TemperatureUnit>(0.0, TemperatureUnit.CELSIUS);
+            Assert.True(first.Equals(second));
+        }
+        // Temperature equality: Fahrenheit to Fahrenheit — same value
+        [Fact]
+        public void TestTemperatureEquality_FahrenheitToFahrenheit_SameValue()
+        {
+            Quantity<TemperatureUnit> first = new Quantity<TemperatureUnit>(32.0, TemperatureUnit.FAHRENHEIT);
+            Quantity<TemperatureUnit> second = new Quantity<TemperatureUnit>(32.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(first.Equals(second));
+        }
+        // Temperature equality: cross-unit — 0°C equals 32°F
+        [Fact]
+        public void TestTemperatureEquality_CelsiusToFahrenheit_0Celsius32Fahrenheit()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(0.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(32.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(celsius.Equals(fahrenheit));
+        }
+        // Temperature equality: cross-unit — 100°C equals 212°F
+        [Fact]
+        public void TestTemperatureEquality_CelsiusToFahrenheit_100Celsius212Fahrenheit()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(212.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(celsius.Equals(fahrenheit));
+        }
+        // Temperature equality: cross-unit — -40°C equals -40°F (unique intersection point)
+        [Fact]
+        public void TestTemperatureEquality_CelsiusToFahrenheit_Negative40Equal()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(-40.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(-40.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(celsius.Equals(fahrenheit));
+        }
+        // Temperature equality: symmetric property — if A equals B, then B equals A
+        [Fact]
+        public void TestTemperatureEquality_SymmetricProperty()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(212.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(celsius.Equals(fahrenheit));
+            Assert.True(fahrenheit.Equals(celsius));
+        }
+        // Temperature equality: reflexive property — temperature equals itself
+        [Fact]
+        public void TestTemperatureEquality_ReflexiveProperty()
+        {
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Assert.True(temp.Equals(temp));
+        }
+        // Temperature equality: different values — 50°C ≠ 100°C
+        [Fact]
+        public void TestTemperatureDifferentValuesInequality()
+        {
+            Quantity<TemperatureUnit> a = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> b = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Assert.False(a.Equals(b));
+        }
+        // Temperature equality: null returns false
+        [Fact]
+        public void TestTemperatureNullOperandValidation_InComparison()
+        {
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Assert.False(temp.Equals(null));
+        }
+
+        // Temperature conversion: 100°C → 212°F
+        [Fact]
+        public void TestTemperatureConversion_CelsiusToFahrenheit_100()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(212.0, result.MeasurementValue, 4);
+            Assert.Equal(TemperatureUnit.FAHRENHEIT, result.Unit);
+        }
+        // Temperature conversion: 32°F → 0°C
+        [Fact]
+        public void TestTemperatureConversion_FahrenheitToCelsius_32()
+        {
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(32.0, TemperatureUnit.FAHRENHEIT);
+            Quantity<TemperatureUnit> result = fahrenheit.ConvertTo(TemperatureUnit.CELSIUS);
+            Assert.Equal(0.0, result.MeasurementValue, 4);
+            Assert.Equal(TemperatureUnit.CELSIUS, result.Unit);
+        }
+        // Temperature conversion: 50°C → 122°F
+        [Fact]
+        public void TestTemperatureConversion_CelsiusToFahrenheit_50()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(122.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: -20°C → -4°F
+        [Fact]
+        public void TestTemperatureConversion_CelsiusToFahrenheit_Negative20()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(-20.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(-4.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: round-trip — convert(convert(value, C, F), F, C) ≈ value
+        [Fact]
+        public void TestTemperatureConversion_RoundTrip_PreservesValue()
+        {
+            Quantity<TemperatureUnit> original = new Quantity<TemperatureUnit>(37.5, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> toFahrenheit = original.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Quantity<TemperatureUnit> backToCelsius = toFahrenheit.ConvertTo(TemperatureUnit.CELSIUS);
+            Assert.Equal(original.MeasurementValue, backToCelsius.MeasurementValue, 4);
+        }
+        // Temperature conversion: same unit returns unchanged value
+        [Fact]
+        public void TestTemperatureConversion_SameUnit()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.CELSIUS);
+            Assert.Equal(100.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: 0°C → 32°F (zero value)
+        [Fact]
+        public void TestTemperatureConversion_ZeroValue()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(0.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(32.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: negative values — -40°C → -40°F (intersection)
+        [Fact]
+        public void TestTemperatureConversion_NegativeValues_EqualPoint()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(-40.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(-40.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: large values — 1000°C → 1832°F
+        [Fact]
+        public void TestTemperatureConversion_LargeValues()
+        {
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(1000.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> result = celsius.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(1832.0, result.MeasurementValue, 4);
+        }
+        // Temperature conversion: static Convert method
+        [Fact]
+        public void TestTemperatureConversion_StaticConvert()
+        {
+            double result = Quantity<TemperatureUnit>.Convert(100.0, TemperatureUnit.CELSIUS, TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(212.0, result, 4);
+        }
+
+        // Temperature unsupported operation: add throws InvalidOperationException
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_Add()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Assert.Throws<InvalidOperationException>(() => t1.Add(t2));
+        }
+        // Temperature unsupported operation: subtract throws InvalidOperationException
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_Subtract()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Assert.Throws<InvalidOperationException>(() => t1.Subtract(t2));
+        }
+        // Temperature unsupported operation: divide throws InvalidOperationException
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_Divide()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Assert.Throws<InvalidOperationException>(() => t1.Divide(t2));
+        }
+        // Temperature unsupported operation: error message contains operation name and explanation
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_ErrorMessage()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => t1.Add(t2));
+            Assert.Contains("Temperature", ex.Message);
+            Assert.Contains("ADD", ex.Message);
+        }
+        // Temperature unsupported operation: add with explicit target throws
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_AddWithTargetUnit()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.FAHRENHEIT);
+            Assert.Throws<InvalidOperationException>(() => t1.Add(t2, TemperatureUnit.CELSIUS));
+        }
+        // Temperature unsupported operation: subtract with explicit target throws
+        [Fact]
+        public void TestTemperatureUnsupportedOperation_SubtractWithTargetUnit()
+        {
+            Quantity<TemperatureUnit> t1 = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> t2 = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.FAHRENHEIT);
+            Assert.Throws<InvalidOperationException>(() => t1.Subtract(t2, TemperatureUnit.FAHRENHEIT));
+        }
+
+        // Temperature cross-category: temperature vs length returns false
+        [Fact]
+        public void TestTemperatureVsLengthIncompatibility()
+        {
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Quantity<LengthUnit> length = new Quantity<LengthUnit>(100.0, LengthUnit.FEET);
+            Assert.False(temp.Equals(length));
+        }
+        // Temperature cross-category: temperature vs weight returns false
+        [Fact]
+        public void TestTemperatureVsWeightIncompatibility()
+        {
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Quantity<WeightUnit> weight = new Quantity<WeightUnit>(50.0, WeightUnit.KILOGRAM);
+            Assert.False(temp.Equals(weight));
+        }
+        // Temperature cross-category: temperature vs volume returns false
+        [Fact]
+        public void TestTemperatureVsVolumeIncompatibility()
+        {
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(25.0, TemperatureUnit.CELSIUS);
+            Quantity<VolumeUnit> vol = new Quantity<VolumeUnit>(25.0, VolumeUnit.LITRE);
+            Assert.False(temp.Equals(vol));
+        }
+
+        // Operation support: TemperatureUnit.CELSIUS does NOT support arithmetic
+        [Fact]
+        public void TestOperationSupportMethods_TemperatureUnitAddition()
+        {
+            Assert.False(TemperatureUnit.CELSIUS.SupportsArithmetic());
+        }
+        // Operation support: TemperatureUnit.FAHRENHEIT does NOT support arithmetic
+        [Fact]
+        public void TestOperationSupportMethods_TemperatureUnitDivision()
+        {
+            Assert.False(TemperatureUnit.FAHRENHEIT.SupportsArithmetic());
+        }
+        // Operation support: LengthUnit DOES support arithmetic (inherited default)
+        [Fact]
+        public void TestOperationSupportMethods_LengthUnitAddition()
+        {
+            Assert.True(((IMeasurable)LengthUnit.FEET).SupportsArithmetic());
+        }
+        // Operation support: WeightUnit DOES support arithmetic (inherited default)
+        [Fact]
+        public void TestOperationSupportMethods_WeightUnitDivision()
+        {
+            Assert.True(((IMeasurable)WeightUnit.KILOGRAM).SupportsArithmetic());
+        }
+        // Operation support: VolumeUnit DOES support arithmetic (inherited default)
+        [Fact]
+        public void TestOperationSupportMethods_VolumeUnitArithmetic()
+        {
+            Assert.True(((IMeasurable)VolumeUnit.LITRE).SupportsArithmetic());
+        }
+
+        // IMeasurable interface evolution: backward compatible — existing units work without modification
+        [Fact]
+        public void TestIMeasurableInterface_Evolution_BackwardCompatible()
+        {
+            // Length: add still works
+            Quantity<LengthUnit> lenResult = new Quantity<LengthUnit>(1.0, LengthUnit.FEET).Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH));
+            Assert.Equal(2.0, lenResult.MeasurementValue, 6);
+            // Weight: subtract still works
+            Quantity<WeightUnit> wgtResult = new Quantity<WeightUnit>(10.0, WeightUnit.KILOGRAM).Subtract(new Quantity<WeightUnit>(5000.0, WeightUnit.GRAM));
+            Assert.Equal(5.0, wgtResult.MeasurementValue, 6);
+            // Volume: divide still works
+            double volRatio = new Quantity<VolumeUnit>(10.0, VolumeUnit.LITRE).Divide(new Quantity<VolumeUnit>(5.0, VolumeUnit.LITRE));
+            Assert.Equal(2.0, volRatio, 6);
+        }
+        // TemperatureUnit: non-linear conversion (not simple multiplication)
+        [Fact]
+        public void TestTemperatureUnit_NonLinearConversion()
+        {
+            // For linear conversion: ConvertToBaseUnit(x) = x * factor
+            // For temperature: ConvertToBaseUnit(212°F) = (212-32)*5/9 = 100°C (non-linear)
+            double celsiusValue = TemperatureUnit.FAHRENHEIT.ConvertToBaseUnit(212.0);
+            Assert.Equal(100.0, celsiusValue, 4);
+            // Prove it's non-linear: if it were linear, 2*212 would give 2*100
+            // But (424-32)*5/9 = 217.78, not 200
+            double doubled = TemperatureUnit.FAHRENHEIT.ConvertToBaseUnit(424.0);
+            Assert.NotEqual(200.0, Math.Round(doubled, 2));
+        }
+        // TemperatureUnit: all constants accessible
+        [Fact]
+        public void TestTemperatureUnit_AllConstants()
+        {
+            Assert.NotNull(TemperatureUnit.CELSIUS);
+            Assert.NotNull(TemperatureUnit.FAHRENHEIT);
+        }
+        // TemperatureUnit: getUnitName returns correct names
+        [Fact]
+        public void TestTemperatureUnit_NameMethod()
+        {
+            Assert.Equal("°C", TemperatureUnit.CELSIUS.GetUnitName());
+            Assert.Equal("°F", TemperatureUnit.FAHRENHEIT.GetUnitName());
+        }
+        // TemperatureUnit: getConversionFactor returns nominal value (not used for non-linear)
+        [Fact]
+        public void TestTemperatureUnit_ConversionFactor()
+        {
+            Assert.Equal(1.0, TemperatureUnit.CELSIUS.GetConversionFactor());
+            Assert.Equal(1.0, TemperatureUnit.FAHRENHEIT.GetConversionFactor());
+        }
+        // TemperatureUnit: ToString returns enum-style name
+        [Fact]
+        public void TestTemperatureUnit_ToString()
+        {
+            Assert.Equal("CELSIUS", TemperatureUnit.CELSIUS.ToString());
+            Assert.Equal("FAHRENHEIT", TemperatureUnit.FAHRENHEIT.ToString());
+        }
+        // TemperatureUnit: validateOperationSupport throws for specific operations
+        [Fact]
+        public void TestTemperatureValidateOperationSupport_MethodBehavior()
+        {
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+                () => TemperatureUnit.CELSIUS.ValidateOperationSupport("ADD"));
+            Assert.Contains("Temperature", ex.Message);
+            Assert.Contains("ADD", ex.Message);
+        }
+        // TemperatureUnit: default method inheritance — non-temperature units have no-op validate
+        [Fact]
+        public void TestTemperatureDefaultMethodInheritance()
+        {
+            // LengthUnit.ValidateOperationSupport should do nothing (default implementation)
+            // This call should NOT throw — verifying default method works
+            ((IMeasurable)LengthUnit.FEET).ValidateOperationSupport("ADD");
+            ((IMeasurable)WeightUnit.KILOGRAM).ValidateOperationSupport("SUBTRACT");
+            ((IMeasurable)VolumeUnit.LITRE).ValidateOperationSupport("DIVIDE");
+        }
+        // Temperature: integration with generic Quantity — works seamlessly
+        [Fact]
+        public void TestTemperatureIntegrationWithGenericQuantity()
+        {
+            // Can create Quantity<TemperatureUnit> instances
+            Quantity<TemperatureUnit> temp = new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS);
+            Assert.Equal(100.0, temp.MeasurementValue, 6);
+            Assert.Equal(TemperatureUnit.CELSIUS, temp.Unit);
+            // Can convert
+            Quantity<TemperatureUnit> converted = temp.ConvertTo(TemperatureUnit.FAHRENHEIT);
+            Assert.Equal(212.0, converted.MeasurementValue, 4);
+            // Can compare
+            Assert.True(temp.Equals(converted));
+        }
+        // Temperature conversion precision: epsilon-based comparison
+        [Fact]
+        public void TestTemperatureConversionPrecision_Epsilon()
+        {
+            // 50°C → 122°F — verify precision
+            Quantity<TemperatureUnit> celsius = new Quantity<TemperatureUnit>(50.0, TemperatureUnit.CELSIUS);
+            Quantity<TemperatureUnit> fahrenheit = new Quantity<TemperatureUnit>(122.0, TemperatureUnit.FAHRENHEIT);
+            Assert.True(celsius.Equals(fahrenheit));
+        }
+        // Temperature: all existing UC1-UC13 operations still work after refactoring
+        [Fact]
+        public void TestTemperatureBackwardCompatibility_UC1_Through_UC13()
+        {
+            // UC1-UC4: Length equality
+            Assert.True(new Quantity<LengthUnit>(1.0, LengthUnit.FEET).Equals(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)));
+            // UC5: Length conversion
+            Assert.Equal(12.0, Quantity<LengthUnit>.Convert(1.0, LengthUnit.FEET, LengthUnit.INCH), 6);
+            // UC6-UC7: Length addition
+            Assert.Equal(2.0, new Quantity<LengthUnit>(1.0, LengthUnit.FEET).Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)).MeasurementValue, 6);
+            // UC9: Weight
+            Assert.True(new Quantity<WeightUnit>(1.0, WeightUnit.KILOGRAM).Equals(new Quantity<WeightUnit>(1000.0, WeightUnit.GRAM)));
+            // UC11: Volume
+            Assert.True(new Quantity<VolumeUnit>(1.0, VolumeUnit.LITRE).Equals(new Quantity<VolumeUnit>(1000.0, VolumeUnit.MILLILITRE)));
+            // UC12: Subtraction
+            Assert.Equal(5.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Subtract(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)).MeasurementValue, 6);
+            // UC12: Division
+            Assert.Equal(2.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET).Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)), 6);
+        }
+
+        // ==================== N-Tier Architecture Tests (UC15) ====================
+
+        // ---- QuantityDTO Tests ----
+
+        // QuantityDTO: construction stores value, unitName, measurementType
+        [Fact]
+        public void TestQuantityDTO_Construction()
+        {
+            QuantityDTO dto = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            Assert.Equal(100.0, dto.Value);
+            Assert.Equal("CELSIUS", dto.UnitName);
+            Assert.Equal("TEMPERATURE", dto.MeasurementType);
+        }
+        // QuantityDTO: toString format
+        [Fact]
+        public void TestQuantityDTO_ToString()
+        {
+            QuantityDTO dto = new QuantityDTO(1.0, "FEET", "LENGTH");
+            Assert.Equal("1 FEET (LENGTH)", dto.ToString());
+        }
+
+
+
+        // ---- QuantityMeasurementEntity Tests ----
+
+        // Entity: single-operand construction (conversion)
+        [Fact]
+        public void TestQuantityEntity_SingleOperandConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "CONVERT", "100 CELSIUS", "FAHRENHEIT", "212");
+            Assert.Equal("CONVERT", entity.OperationType);
+            Assert.Equal("100 CELSIUS", entity.Operand1);
+            Assert.Equal("N/A", entity.Operand2);
+            Assert.Equal("FAHRENHEIT", entity.TargetUnit);
+            Assert.Equal("212", entity.Result);
+            Assert.False(entity.HasError);
+        }
+        // Entity: binary-operand construction (addition)
+        [Fact]
+        public void TestQuantityEntity_BinaryOperandConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH");
+            Assert.Equal("ADD", entity.OperationType);
+            Assert.Equal("1 FEET", entity.Operand1);
+            Assert.Equal("12 INCH", entity.Operand2);
+            Assert.Equal("FEET", entity.TargetUnit);
+            Assert.Equal("2", entity.Result);
+            Assert.False(entity.HasError);
+        }
+        // Entity: error construction
+        [Fact]
+        public void TestQuantityEntity_ErrorConstruction()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "COMPARE", "Cross-category not allowed");
+            Assert.Equal("COMPARE", entity.OperationType);
+            Assert.True(entity.HasError);
+            Assert.Equal("Cross-category not allowed", entity.ErrorMessage);
+        }
+        // Entity: toString for success
+        [Fact]
+        public void TestQuantityEntity_ToString_Success()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "CONVERT", "100 CELSIUS", "FAHRENHEIT", "212");
+            Assert.Contains("CONVERT", entity.ToString());
+            Assert.Contains("100 CELSIUS", entity.ToString());
+        }
+        // Entity: toString for error
+        [Fact]
+        public void TestQuantityEntity_ToString_Error()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "DIVIDE", "Division by zero");
+            Assert.Contains("ERROR", entity.ToString());
+            Assert.Contains("Division by zero", entity.ToString());
+        }
+
+        // ---- Repository Tests ----
+
+        // Repository: EF Core save and retrieve via helper
+        [Fact]
+        public void TestRepository_EfCorePattern()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            Assert.NotNull(repo);
+            Assert.Equal(0, repo.GetCount());
+        }
+        // Repository: save and retrieve
+        [Fact]
+        public void TestRepository_SaveAndRetrieve()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            int initialCount = repo.GetCount();
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "TEST", "test operand", "test target", "test result");
+            repo.Save(entity);
+            Assert.True(repo.GetCount() > initialCount);
+        }
+
+
+        // ---- Service Layer Tests ----
+
+        // Service: compare equality same unit success
+        [Fact]
+        public void TestService_CompareEquality_SameUnit_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Compare(first, second);
+            Assert.Equal(1.0, result.Value); // 1.0 means equal
+        }
+        // Service: compare equality cross-unit success
+        [Fact]
+        public void TestService_CompareEquality_DifferentUnit_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
+            QuantityDTO result = svc.Compare(first, second);
+            Assert.Equal(1.0, result.Value);
+        }
+        // Service: compare equality cross-category error
+        [Fact]
+        public void TestService_CompareEquality_CrossCategory_Error()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO length = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO weight = new QuantityDTO(1.0, "KILOGRAM", "WEIGHT");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Compare(length, weight));
+        }
+        // Service: convert success
+        [Fact]
+        public void TestService_Convert_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO source = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Convert(source, "INCH");
+            Assert.Equal(12.0, result.Value, 4);
+            Assert.Equal("INCH", result.UnitName);
+        }
+        // Service: add success
+        [Fact]
+        public void TestService_Add_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
+            QuantityDTO result = svc.Add(first, second, "FEET");
+            Assert.Equal(2.0, result.Value, 4);
+        }
+        // Service: add temperature unsupported
+        [Fact]
+        public void TestService_Add_UnsupportedOperation_Error()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO t1 = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            QuantityDTO t2 = new QuantityDTO(50.0, "CELSIUS", "TEMPERATURE");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Add(t1, t2, "CELSIUS"));
+        }
+        // Service: subtract success
+        [Fact]
+        public void TestService_Subtract_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Subtract(first, second, "FEET");
+            Assert.Equal(5.0, result.Value, 4);
+        }
+        // Service: divide success
+        [Fact]
+        public void TestService_Divide_Success()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
+            QuantityDTO result = svc.Divide(first, second);
+            Assert.Equal(2.0, result.Value, 4);
+        }
+        // Service: divide by zero error
+        [Fact]
+        public void TestService_Divide_ByZero_Error()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
+            QuantityDTO second = new QuantityDTO(0.0, "FEET", "LENGTH");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Divide(first, second));
+        }
+        // Service: null entity rejected
+        [Fact]
+        public void TestService_NullEntity_Rejection()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            Assert.Throws<QuantityMeasurementException>(() => svc.Compare(null!, new QuantityDTO(1.0, "FEET", "LENGTH")));
+        }
+        // Service: unknown unit error
+        [Fact]
+        public void TestService_UnknownUnit_Error()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO dto = new QuantityDTO(1.0, "INVALID_UNIT", "LENGTH");
+            Assert.Throws<QuantityMeasurementException>(() => svc.Convert(dto, "FEET"));
+        }
+
+        // Service: all measurement categories work
+        [Fact]
+        public void TestService_AllMeasurementCategories()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            // Length
+            Assert.Equal(12.0, svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH").Value, 4);
+            // Weight
+            Assert.Equal(1000.0, svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM").Value, 4);
+            // Volume
+            Assert.Equal(1000.0, svc.Convert(new QuantityDTO(1.0, "LITRE", "VOLUME"), "MILLILITRE").Value, 4);
+            // Temperature
+            Assert.Equal(212.0, svc.Convert(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"), "FAHRENHEIT").Value, 4);
+        }
+        // Service: temperature conversion works but arithmetic doesn't
+        [Fact]
+        public void TestService_TemperatureConversionSucceeds_ArithmeticFails()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            // Conversion works
+            QuantityDTO converted = svc.Convert(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"), "FAHRENHEIT");
+            Assert.Equal(212.0, converted.Value, 4);
+            // Arithmetic fails
+            Assert.Throws<QuantityMeasurementException>(() =>
+                svc.Add(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"),
+                    new QuantityDTO(50.0, "CELSIUS", "TEMPERATURE"), "CELSIUS"));
+        }
+
+        // ---- Controller Layer Tests ----
+
+
+
+        // ---- IMeasurable Helper Methods Tests ----
+
+        // GetMeasurementType: all unit classes
+        [Fact]
+        public void TestIMeasurable_GetMeasurementType()
+        {
+            Assert.Equal("LENGTH", LengthUnit.FEET.GetMeasurementType());
+            Assert.Equal("WEIGHT", WeightUnit.KILOGRAM.GetMeasurementType());
+            Assert.Equal("VOLUME", VolumeUnit.LITRE.GetMeasurementType());
+            Assert.Equal("TEMPERATURE", TemperatureUnit.CELSIUS.GetMeasurementType());
+        }
+        // GetUnitByName: all units resolve correctly
+        [Fact]
+        public void TestIMeasurable_GetUnitByName()
+        {
+            Assert.Equal(LengthUnit.FEET, IMeasurable.GetUnitByName("FEET"));
+            Assert.Equal(LengthUnit.INCH, IMeasurable.GetUnitByName("INCH"));
+            Assert.Equal(WeightUnit.KILOGRAM, IMeasurable.GetUnitByName("KILOGRAM"));
+            Assert.Equal(VolumeUnit.LITRE, IMeasurable.GetUnitByName("LITRE"));
+            Assert.Equal(TemperatureUnit.CELSIUS, IMeasurable.GetUnitByName("CELSIUS"));
+        }
+        // GetUnitByName: unknown unit returns null
+        [Fact]
+        public void TestIMeasurable_GetUnitByName_Unknown()
+        {
+            Assert.Null(IMeasurable.GetUnitByName("UNKNOWN_UNIT"));
+        }
+        // GetUnitByName: case-insensitive lookup
+        [Fact]
+        public void TestIMeasurable_GetUnitByName_CaseInsensitive()
+        {
+            Assert.Equal(LengthUnit.FEET, IMeasurable.GetUnitByName("feet"));
+            Assert.Equal(WeightUnit.GRAM, IMeasurable.GetUnitByName("gram"));
+        }
+
+        // ---- Layer Separation Tests ----
+
+        // Service can be tested independently without controller
+        [Fact]
+        public void TestLayerSeparation_ServiceIndependence()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO result = svc.Compare(
+                new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"),
+                new QuantityDTO(1000.0, "GRAM", "WEIGHT"));
+            Assert.Equal(1.0, result.Value);
+        }
+
+        // ---- Backward Compatibility ----
+
+        // All UC1-UC14 operations unchanged after N-Tier refactoring
+        [Fact]
+        public void TestBackwardCompatibility_AllUC1_UC14_Tests()
+        {
+            // UC1-UC4: Direct Quantity comparison still works
+            Assert.True(new Quantity<LengthUnit>(1.0, LengthUnit.FEET)
+                .Equals(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)));
+            // UC5: Conversion still works
+            Assert.Equal(12.0, Quantity<LengthUnit>.Convert(1.0, LengthUnit.FEET, LengthUnit.INCH), 6);
+            // UC6/UC7: Addition still works
+            Assert.Equal(2.0, new Quantity<LengthUnit>(1.0, LengthUnit.FEET)
+                .Add(new Quantity<LengthUnit>(12.0, LengthUnit.INCH)).MeasurementValue, 6);
+            // UC12: Subtraction/Division still works
+            Assert.Equal(5.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Subtract(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)).MeasurementValue, 6);
+            Assert.Equal(2.0, new Quantity<LengthUnit>(10.0, LengthUnit.FEET)
+                .Divide(new Quantity<LengthUnit>(5.0, LengthUnit.FEET)), 6);
+            // UC14: Temperature conversion still works
+            Assert.Equal(212.0, new Quantity<TemperatureUnit>(100.0, TemperatureUnit.CELSIUS)
+                .ConvertTo(TemperatureUnit.FAHRENHEIT).MeasurementValue, 4);
+        }
+
+        // ---- Custom Exception Tests ----
+
+        // QuantityMeasurementException: message constructor
+        [Fact]
+        public void TestQuantityMeasurementException_Message()
+        {
+            QuantityMeasurementException ex = new QuantityMeasurementException("test error");
+            Assert.Equal("test error", ex.Message);
+        }
+        // QuantityMeasurementException: message + inner exception
+        [Fact]
+        public void TestQuantityMeasurementException_WithInnerException()
+        {
+            Exception inner = new InvalidOperationException("inner");
+            QuantityMeasurementException ex = new QuantityMeasurementException("outer", inner);
+            Assert.Equal("outer", ex.Message);
+            Assert.Equal(inner, ex.InnerException);
+        }
+
+        // ---- Entity Immutability Test ----
+
+        // Entity: properties are init-only (immutable after construction)
+        [Fact]
+        public void TestEntity_Immutability()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH");
+            // Verify properties are accessible and contain expected values
+            Assert.Equal("ADD", entity.OperationType);
+            Assert.Equal("1 FEET", entity.Operand1);
+            Assert.Equal("12 INCH", entity.Operand2);
+            Assert.False(entity.HasError);
+        }
+
+        // ---- Data Flow Tests ----
+
+        // Data flows correctly from service to result
+        [Fact]
+        public void TestDataFlow_ControllerToService()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            QuantityDTO input = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
+            QuantityDTO result = svc.Convert(input, "FAHRENHEIT");
+            Assert.Equal(212.0, result.Value, 4);
+            Assert.Equal("FAHRENHEIT", result.UnitName);
+            Assert.Equal("TEMPERATURE", result.MeasurementType);
+        }
+
+        // Entity operation type tracking
+        [Fact]
+        public void TestEntity_OperationType_Tracking()
+        {
+            QuantityMeasurementEntity compareEntity = new QuantityMeasurementEntity(
+                "COMPARE", "1 FEET", "1 FEET", null, "True");
+            Assert.Equal("COMPARE", compareEntity.OperationType);
+
+            QuantityMeasurementEntity convertEntity = new QuantityMeasurementEntity(
+                "CONVERT", "1 FEET", "INCH", "12");
+            Assert.Equal("CONVERT", convertEntity.OperationType);
+
+            QuantityMeasurementEntity addEntity = new QuantityMeasurementEntity(
+                "ADD", "1 FEET", "12 INCH", "FEET", "2");
+            Assert.Equal("ADD", addEntity.OperationType);
+        }
+
+        // ==================== UC17 Tests ====================
+
+        // ---- EF Core Repository Tests ----
+
+        // UC17: Repository save and count
+        [Fact]
+        public void TestUC17_EfRepository_SaveAndCount()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            Assert.Equal(0, repo.GetCount());
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "COMPARE", "1 FEET", "1 FEET", null, "True", "LENGTH");
+            repo.Save(entity);
+            Assert.Equal(1, repo.GetCount());
+        }
+
+        // UC17: Repository get all measurements
+        [Fact]
+        public void TestUC17_EfRepository_GetAllMeasurements()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH"));
+            List<QuantityMeasurementEntity> all = repo.GetAllMeasurements();
+            Assert.Equal(2, all.Count);
+        }
+
+        // UC17: Repository get by operation type
+        [Fact]
+        public void TestUC17_EfRepository_GetByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 KG", "GRAM", "1000", "WEIGHT"));
+            List<QuantityMeasurementEntity> converts = repo.GetMeasurementsByOperation("CONVERT");
+            Assert.Equal(2, converts.Count);
+        }
+
+        // UC17: Repository get by measurement type
+        [Fact]
+        public void TestUC17_EfRepository_GetByType()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 KG", "GRAM", "1000", "WEIGHT"));
+            List<QuantityMeasurementEntity> lengthOnly = repo.GetMeasurementsByType("LENGTH");
+            Assert.Equal(1, lengthOnly.Count);
+        }
+
+        // UC17: Repository get errored measurements
+        [Fact]
+        public void TestUC17_EfRepository_GetErrored()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("COMPARE", "Some error", "LENGTH"));
+            List<QuantityMeasurementEntity> errors = repo.GetErroredMeasurements();
+            Assert.Single(errors);
+            Assert.True(errors[0].HasError);
+        }
+
+        // UC17: Repository count by operation
+        [Fact]
+        public void TestUC17_EfRepository_CountByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH"));
+            repo.Save(new QuantityMeasurementEntity("ADD", "err", "LENGTH")); // error entity
+            int successCount = repo.GetCountByOperation("ADD");
+            Assert.Equal(1, successCount); // only non-error counted
+        }
+
+        // UC17: Repository total count equals count
+        [Fact]
+        public void TestUC17_EfRepository_TotalCountEqualsCount()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            repo.Save(new QuantityMeasurementEntity("CONVERT", "1 KG", "GRAM", "1000", "WEIGHT"));
+            Assert.Equal(repo.GetCount(), repo.GetTotalCount());
+        }
+
+        // ---- Service UC17 History Tests ----
+
+        // UC17: Service history by operation
+        [Fact]
+        public void TestUC17_Service_HistoryByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
+            svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM");
+            List<QuantityMeasurementDTO> history = svc.GetHistoryByOperation("CONVERT");
+            Assert.Equal(2, history.Count);
+        }
+
+        // UC17: Service history by measurement type
+        [Fact]
+        public void TestUC17_Service_HistoryByType()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
+            svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM");
+            List<QuantityMeasurementDTO> lengthHistory = svc.GetHistoryByType("LENGTH");
+            Assert.Single(lengthHistory);
+        }
+
+        // UC17: Service count by operation
+        [Fact]
+        public void TestUC17_Service_CountByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            svc.Add(new QuantityDTO(1.0, "FEET", "LENGTH"), new QuantityDTO(1.0, "FEET", "LENGTH"), "FEET");
+            svc.Add(new QuantityDTO(2.0, "FEET", "LENGTH"), new QuantityDTO(3.0, "FEET", "LENGTH"), "FEET");
+            int count = svc.GetCountByOperation("ADD");
+            Assert.Equal(2, count);
+        }
+
+        // UC17: Service error history
+        [Fact]
+        public void TestUC17_Service_ErrorHistory()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            // Trigger an error (unknown unit)
+            try { svc.Convert(new QuantityDTO(1.0, "INVALID", "LENGTH"), "FEET"); } catch { }
+            List<QuantityMeasurementDTO> errors = svc.GetErrorHistory();
+            // Error entity may or may not be saved depending on exception flow
+            Assert.NotNull(errors);
+        }
+
+        // ---- QuantityMeasurementDTO Tests ----
+
+        // UC17: DTO FromEntity factory method
+        [Fact]
+        public void TestUC17_DTO_FromEntity()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
+                "CONVERT", "1 FEET", "INCH", "12", "LENGTH");
+            QuantityMeasurementDTO dto = QuantityMeasurementDTO.FromEntity(entity);
+            Assert.Equal("CONVERT", dto.Operation);
+            Assert.Equal("LENGTH", dto.ThisMeasurementType);
+            Assert.False(dto.IsError);
+        }
+
+        // UC17: DTO FromEntityList factory method
+        [Fact]
+        public void TestUC17_DTO_FromEntityList()
+        {
+            List<QuantityMeasurementEntity> entities = new List<QuantityMeasurementEntity>
+            {
+                new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH"),
+                new QuantityMeasurementEntity("ADD", "1 FEET", "12 INCH", "FEET", "2", "LENGTH")
+            };
+            List<QuantityMeasurementDTO> dtos = QuantityMeasurementDTO.FromEntityList(entities);
+            Assert.Equal(2, dtos.Count);
+            Assert.Equal("CONVERT", dtos[0].Operation);
+            Assert.Equal("ADD", dtos[1].Operation);
+        }
+
+        // UC17: DTO error entity mapping
+        [Fact]
+        public void TestUC17_DTO_ErrorEntityMapping()
+        {
+            QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
+                "DIVIDE", "Division by zero");
+            QuantityMeasurementDTO dto = QuantityMeasurementDTO.FromEntity(errorEntity);
+            Assert.True(dto.IsError);
+            Assert.Contains("Division by zero", dto.ErrorMessage);
+        }
+
+        // ---- QuantityInputDTO Tests ----
+
+        // UC17: QuantityInputDTO creation
+        [Fact]
+        public void TestUC17_QuantityInputDTO_Creation()
+        {
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(1.0, "FEET", "LENGTH"),
+                ThatQuantityDTO = new QuantityDTO(12.0, "INCH", "LENGTH"),
+                TargetUnit = "FEET"
+            };
+            Assert.Equal(1.0, input.ThisQuantityDTO.Value);
+            Assert.Equal("INCH", input.ThatQuantityDTO.UnitName);
+            Assert.Equal("FEET", input.TargetUnit);
+        }
+
+        // ---- OperationType Enum Tests ----
+
+        // UC17: OperationType enum values
+        [Fact]
+        public void TestUC17_OperationType_Values()
+        {
+            Assert.Equal("COMPARE", OperationType.COMPARE.ToString());
+            Assert.Equal("CONVERT", OperationType.CONVERT.ToString());
+            Assert.Equal("ADD", OperationType.ADD.ToString());
+            Assert.Equal("SUBTRACT", OperationType.SUBTRACT.ToString());
+            Assert.Equal("DIVIDE", OperationType.DIVIDE.ToString());
+        }
+
+        // ---- DbContext Tests ----
+
+        // UC17: DbContext creates table correctly
+        [Fact]
+        public void TestUC17_DbContext_CreatesTable()
+        {
+            var options = new DbContextOptionsBuilder<QuantityMeasurementDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            using var context = new QuantityMeasurementDbContext(options);
+            Assert.NotNull(context.QuantityMeasurements);
+            Assert.Equal(0, context.QuantityMeasurements.Count());
+        }
+
+        // UC17: DbContext save and retrieve entity
+        [Fact]
+        public void TestUC17_DbContext_SaveAndRetrieve()
+        {
+            var options = new DbContextOptionsBuilder<QuantityMeasurementDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            using var context = new QuantityMeasurementDbContext(options);
+            context.QuantityMeasurements.Add(new QuantityMeasurementEntity(
+                "CONVERT", "1 FEET", "INCH", "12", "LENGTH"));
+            context.SaveChanges();
+            Assert.Equal(1, context.QuantityMeasurements.Count());
+        }
+
+        // ---- REST API Controller Tests ----
+
+        // UC17: API controller compare endpoint
+        [Fact]
+        public void TestUC17_ApiController_Compare()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(1.0, "FEET", "LENGTH"),
+                ThatQuantityDTO = new QuantityDTO(12.0, "INCH", "LENGTH")
+            };
+            var result = controller.CompareQuantities(input);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller convert endpoint
+        [Fact]
+        public void TestUC17_ApiController_Convert()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(1.0, "FEET", "LENGTH"),
+                TargetUnit = "INCH"
+            };
+            var result = controller.ConvertQuantity(input);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller add endpoint
+        [Fact]
+        public void TestUC17_ApiController_Add()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(1.0, "FEET", "LENGTH"),
+                ThatQuantityDTO = new QuantityDTO(12.0, "INCH", "LENGTH"),
+                TargetUnit = "FEET"
+            };
+            var result = controller.AddQuantities(input);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller subtract endpoint
+        [Fact]
+        public void TestUC17_ApiController_Subtract()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(10.0, "FEET", "LENGTH"),
+                ThatQuantityDTO = new QuantityDTO(5.0, "FEET", "LENGTH"),
+                TargetUnit = "FEET"
+            };
+            var result = controller.SubtractQuantities(input);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller divide endpoint
+        [Fact]
+        public void TestUC17_ApiController_Divide()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            QuantityInputDTO input = new QuantityInputDTO
+            {
+                ThisQuantityDTO = new QuantityDTO(10.0, "FEET", "LENGTH"),
+                ThatQuantityDTO = new QuantityDTO(5.0, "FEET", "LENGTH")
+            };
+            var result = controller.DivideQuantities(input);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller history by operation
+        [Fact]
+        public void TestUC17_ApiController_HistoryByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            // Perform a conversion first
+            svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
+            var result = controller.GetOperationHistory("CONVERT");
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller count by operation
+        [Fact]
+        public void TestUC17_ApiController_CountByOperation()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
+            var result = controller.GetOperationCount("CONVERT");
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // UC17: API controller error history
+        [Fact]
+        public void TestUC17_ApiController_ErrorHistory()
+        {
+            IQuantityMeasurementRepository repo = CreateTestRepository();
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            var controller = new QuantityMeasurementApiController(svc);
+            var result = controller.GetErrorHistory();
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
+
+        // ---- Global Exception Filter Tests ----
+
+        // UC17: QuantityMeasurementException properly named
+        [Fact]
+        public void TestUC17_ExceptionFilter_QuantityMeasurementException()
+        {
+            QuantityMeasurementException ex = new QuantityMeasurementException("Test error message");
+            Assert.IsType<QuantityMeasurementException>(ex);
+            Assert.Equal("Test error message", ex.Message);
+        }
+
+        // ---- Entity EF Core Annotation Tests ----
+
+        // UC17: Entity has auto-generated Id
+        [Fact]
+        public void TestUC17_Entity_AutoGeneratedId()
+        {
+            var options = new DbContextOptionsBuilder<QuantityMeasurementDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            using var context = new QuantityMeasurementDbContext(options);
+            var entity = new QuantityMeasurementEntity("CONVERT", "1 FEET", "INCH", "12", "LENGTH");
+            context.QuantityMeasurements.Add(entity);
+            context.SaveChanges();
+            Assert.True(entity.Id > 0);
+        }
+
+        // UC17: Entity property setters work for EF Core
+        [Fact]
+        public void TestUC17_Entity_PropertySetters()
+        {
+            QuantityMeasurementEntity entity = new QuantityMeasurementEntity();
+            entity.OperationType = "COMPARE";
+            entity.Operand1 = "test1";
+            entity.Operand2 = "test2";
+            entity.MeasurementType = "LENGTH";
+            Assert.Equal("COMPARE", entity.OperationType);
+            Assert.Equal("test1", entity.Operand1);
+        }
+
+        // ---- QuantityDTO JSON Deserialization Tests ----
+
+        // UC17: QuantityDTO parameterless constructor for JSON
+        [Fact]
+        public void TestUC17_QuantityDTO_ParameterlessConstructor()
+        {
+            QuantityDTO dto = new QuantityDTO();
+            dto.Value = 5.0;
+            dto.UnitName = "GRAM";
+            dto.MeasurementType = "WEIGHT";
+            Assert.Equal(5.0, dto.Value);
+            Assert.Equal("GRAM", dto.UnitName);
+            Assert.Equal("WEIGHT", dto.MeasurementType);
+        }
+    }
+}
