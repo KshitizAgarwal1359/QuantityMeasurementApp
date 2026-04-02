@@ -22,5 +22,7 @@ namespace QuantityMeasurement.Service
         int GetCountByOperation(string operationType);
         // UC17: Get all errored measurements
         List<QuantityMeasurementDTO> GetErrorHistory();
+        // UC17: Get history by username
+        List<QuantityMeasurementDTO> GetHistoryByUsername(string username);
     }
 }

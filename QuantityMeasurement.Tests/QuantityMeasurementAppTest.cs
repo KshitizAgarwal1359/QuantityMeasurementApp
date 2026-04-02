@@ -3074,7 +3074,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_CompareEquality_SameUnit_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO result = svc.Compare(first, second);
@@ -3085,7 +3085,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_CompareEquality_DifferentUnit_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
             QuantityDTO result = svc.Compare(first, second);
@@ -3096,7 +3096,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_CompareEquality_CrossCategory_Error()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO length = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO weight = new QuantityDTO(1.0, "KILOGRAM", "WEIGHT");
             Assert.Throws<QuantityMeasurementException>(() => svc.Compare(length, weight));
@@ -3106,7 +3106,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Convert_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO source = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO result = svc.Convert(source, "INCH");
             Assert.Equal(12.0, result.Value, 4);
@@ -3117,7 +3117,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Add_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(1.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(12.0, "INCH", "LENGTH");
             QuantityDTO result = svc.Add(first, second, "FEET");
@@ -3128,7 +3128,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Add_UnsupportedOperation_Error()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO t1 = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
             QuantityDTO t2 = new QuantityDTO(50.0, "CELSIUS", "TEMPERATURE");
             Assert.Throws<QuantityMeasurementException>(() => svc.Add(t1, t2, "CELSIUS"));
@@ -3138,7 +3138,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Subtract_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
             QuantityDTO result = svc.Subtract(first, second, "FEET");
@@ -3149,7 +3149,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Divide_Success()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(5.0, "FEET", "LENGTH");
             QuantityDTO result = svc.Divide(first, second);
@@ -3160,7 +3160,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_Divide_ByZero_Error()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO first = new QuantityDTO(10.0, "FEET", "LENGTH");
             QuantityDTO second = new QuantityDTO(0.0, "FEET", "LENGTH");
             Assert.Throws<QuantityMeasurementException>(() => svc.Divide(first, second));
@@ -3170,7 +3170,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_NullEntity_Rejection()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             Assert.Throws<QuantityMeasurementException>(() => svc.Compare(null!, new QuantityDTO(1.0, "FEET", "LENGTH")));
         }
         // Service: unknown unit error
@@ -3178,7 +3178,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_UnknownUnit_Error()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO dto = new QuantityDTO(1.0, "INVALID_UNIT", "LENGTH");
             Assert.Throws<QuantityMeasurementException>(() => svc.Convert(dto, "FEET"));
         }
@@ -3188,7 +3188,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_AllMeasurementCategories()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             // Length
             Assert.Equal(12.0, svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH").Value, 4);
             // Weight
@@ -3203,7 +3203,7 @@ namespace QuantityMeasurement.Tests
         public void TestService_TemperatureConversionSucceeds_ArithmeticFails()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             // Conversion works
             QuantityDTO converted = svc.Convert(new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE"), "FAHRENHEIT");
             Assert.Equal(212.0, converted.Value, 4);
@@ -3259,7 +3259,7 @@ namespace QuantityMeasurement.Tests
         public void TestLayerSeparation_ServiceIndependence()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO result = svc.Compare(
                 new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"),
                 new QuantityDTO(1000.0, "GRAM", "WEIGHT"));
@@ -3331,7 +3331,7 @@ namespace QuantityMeasurement.Tests
         public void TestDataFlow_ControllerToService()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             QuantityDTO input = new QuantityDTO(100.0, "CELSIUS", "TEMPERATURE");
             QuantityDTO result = svc.Convert(input, "FAHRENHEIT");
             Assert.Equal(212.0, result.Value, 4);
@@ -3445,7 +3445,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_Service_HistoryByOperation()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
             svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM");
             List<QuantityMeasurementDTO> history = svc.GetHistoryByOperation("CONVERT");
@@ -3457,7 +3457,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_Service_HistoryByType()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
             svc.Convert(new QuantityDTO(1.0, "KILOGRAM", "WEIGHT"), "GRAM");
             List<QuantityMeasurementDTO> lengthHistory = svc.GetHistoryByType("LENGTH");
@@ -3469,7 +3469,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_Service_CountByOperation()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             svc.Add(new QuantityDTO(1.0, "FEET", "LENGTH"), new QuantityDTO(1.0, "FEET", "LENGTH"), "FEET");
             svc.Add(new QuantityDTO(2.0, "FEET", "LENGTH"), new QuantityDTO(3.0, "FEET", "LENGTH"), "FEET");
             int count = svc.GetCountByOperation("ADD");
@@ -3481,7 +3481,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_Service_ErrorHistory()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             // Trigger an error (unknown unit)
             try { svc.Convert(new QuantityDTO(1.0, "INVALID", "LENGTH"), "FEET"); } catch { }
             List<QuantityMeasurementDTO> errors = svc.GetErrorHistory();
@@ -3594,7 +3594,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_Compare()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             QuantityInputDTO input = new QuantityInputDTO
             {
@@ -3610,7 +3610,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_Convert()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             QuantityInputDTO input = new QuantityInputDTO
             {
@@ -3626,7 +3626,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_Add()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             QuantityInputDTO input = new QuantityInputDTO
             {
@@ -3643,7 +3643,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_Subtract()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             QuantityInputDTO input = new QuantityInputDTO
             {
@@ -3660,7 +3660,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_Divide()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             QuantityInputDTO input = new QuantityInputDTO
             {
@@ -3676,7 +3676,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_HistoryByOperation()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             // Perform a conversion first
             svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
@@ -3689,7 +3689,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_CountByOperation()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             svc.Convert(new QuantityDTO(1.0, "FEET", "LENGTH"), "INCH");
             var result = controller.GetOperationCount("CONVERT");
@@ -3701,7 +3701,7 @@ namespace QuantityMeasurement.Tests
         public void TestUC17_ApiController_ErrorHistory()
         {
             IQuantityMeasurementRepository repo = CreateTestRepository();
-            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo);
+            IQuantityMeasurementService svc = new QuantityMeasurementServiceImpl(repo, new Microsoft.AspNetCore.Http.HttpContextAccessor());
             var controller = new QuantityMeasurementApiController(svc);
             var result = controller.GetErrorHistory();
             Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);

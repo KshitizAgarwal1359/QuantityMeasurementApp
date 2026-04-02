@@ -16,12 +16,14 @@ namespace QuantityMeasurement.Models
         public string? ResultMeasurementType { get; set; }
         public string? ErrorMessage { get; set; }
         public bool IsError { get; set; }
+        public string? Username { get; set; }
 
         // Factory method — equivalent of fromEntity() in Spring DTO
         public static QuantityMeasurementDTO FromEntity(QuantityMeasurementEntity entity)
         {
             return new QuantityMeasurementDTO
             {
+                Username = entity.Username,
                 Operation = entity.OperationType,
                 ThisUnit = entity.Operand1,
                 ThatUnit = entity.Operand2,

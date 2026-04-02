@@ -159,5 +159,13 @@ namespace QuantityMeasurement.Controllers
             List<QuantityMeasurementDTO> errors = service.GetErrorHistory();
             return Ok(errors);
         }
+        // GET /api/v1/quantities/history/my — Get history for the current authenticated user
+        [HttpGet("history/my")]
+        public IActionResult GetMyHistory()
+        {
+            string username = HttpContext.User.Identity?.Name ?? "Guest";
+            List<QuantityMeasurementDTO> history = service.GetHistoryByUsername(username);
+            return Ok(history);
+        }
     }
 }
