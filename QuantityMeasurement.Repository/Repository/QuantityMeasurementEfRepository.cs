@@ -50,6 +50,16 @@ namespace QuantityMeasurement.Repository
                         select e;
             return query.ToList();
         }
+        
+        public List<QuantityMeasurementEntity> GetMeasurementsByUsername(string username)
+        {
+            var query = from e in context.QuantityMeasurements
+                        where e.Username == username
+                        orderby e.Timestamp descending
+                        select e;
+            return query.ToList();
+        }
+        
         // Equivalent of countByOperationAndIsErrorFalse(String operation)
         public int GetCountByOperation(string operationType)
         {

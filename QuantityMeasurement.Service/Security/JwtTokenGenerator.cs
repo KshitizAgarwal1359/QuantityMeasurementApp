@@ -26,6 +26,7 @@ namespace QuantityMeasurement.Service.Security
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             List<Claim> claims = new List<Claim>();
             claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.Username));
+            claims.Add(new Claim(ClaimTypes.Name, user.Username));
             claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             DateTime expiration = DateTime.UtcNow.AddMinutes(expirationMinutes);

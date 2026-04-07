@@ -27,7 +27,8 @@ namespace QuantityMeasurement.Models
         [MaxLength(200)]
         public string Operand2 { get; set; } = "N/A";
 
-        [NotMapped]
+        [Column("TargetUnit")]
+        [MaxLength(50)]
         public string TargetUnit { get; set; } = "N/A";
 
         [Column("FinalResult")]
@@ -44,6 +45,10 @@ namespace QuantityMeasurement.Models
         [Column("ErrorMessage")]
         [MaxLength(500)]
         public string ErrorMessage { get; set; } = "None";
+
+        [Column("Username")]
+        [MaxLength(50)]
+        public string Username { get; set; } = "Guest";
 
         [Column("RecordedAt")]
         public DateTime Timestamp { get; set; }

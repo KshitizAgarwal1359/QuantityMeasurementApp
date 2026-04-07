@@ -1,16 +1,20 @@
 using QuantityMeasurement.Models;
 using QuantityMeasurement.Repository;
 
+using Microsoft.AspNetCore.Http;
+
 namespace QuantityMeasurement.Service
 {
     // UC17: Service implementation with history/count methods.
     public class QuantityMeasurementServiceImpl : IQuantityMeasurementService
     {
         private readonly IQuantityMeasurementRepository repository;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public QuantityMeasurementServiceImpl(IQuantityMeasurementRepository repository)
+        public QuantityMeasurementServiceImpl(IQuantityMeasurementRepository repository, IHttpContextAccessor httpContextAccessor)
         {
             this.repository = repository;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
         // Compare two quantities for equality
@@ -32,7 +36,7 @@ namespace QuantityMeasurement.Service
                 string result = isEqual.ToString();
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
                     "COMPARE", first.ToString(), second.ToString(), "N/A", result, first.MeasurementType);
-                repository.Save(entity);
+                SaveUserEntity(entity);
 
                 return new QuantityDTO(isEqual ? 1.0 : 0.0, "BOOLEAN", "RESULT");
             }
@@ -44,7 +48,7 @@ namespace QuantityMeasurement.Service
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     "COMPARE", ex.Message, first?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException("Comparison failed: " + ex.Message, ex);
             }
         }
@@ -65,7 +69,7 @@ namespace QuantityMeasurement.Service
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
                     "CONVERT", source.ToString(), targetUnitName, convertedValue.ToString(), source.MeasurementType);
-                repository.Save(entity);
+                SaveUserEntity(entity);
 
                 return new QuantityDTO(convertedValue, targetUnitName, source.MeasurementType);
             }
@@ -77,7 +81,7 @@ namespace QuantityMeasurement.Service
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     "CONVERT", ex.Message, source?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException("Conversion failed: " + ex.Message, ex);
             }
         }
@@ -130,9 +134,9 @@ namespace QuantityMeasurement.Service
 
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
                     "DIVIDE", first.ToString(), second.ToString(), "N/A", ratio.ToString(), first.MeasurementType);
-                repository.Save(entity);
+                SaveUserEntity(entity);
 
-                return new QuantityDTO(ratio, "RATIO", "RESULT");
+                return new QuantityDTO(ratio, "RATIO", first.MeasurementType);
             }
             catch (QuantityMeasurementException)
             {
@@ -142,14 +146,14 @@ namespace QuantityMeasurement.Service
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     "DIVIDE", ex.Message, first?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException("Division failed: " + ex.Message, ex);
             }
             catch (Exception ex)
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     "DIVIDE", ex.Message, first?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException("Division failed: " + ex.Message, ex);
             }
         }
@@ -158,6 +162,13 @@ namespace QuantityMeasurement.Service
         public List<QuantityMeasurementDTO> GetHistoryByOperation(string operationType)
         {
             List<QuantityMeasurementEntity> entities = repository.GetMeasurementsByOperation(operationType);
+            return QuantityMeasurementDTO.FromEntityList(entities);
+        }
+
+        // UC17: Get history by username
+        public List<QuantityMeasurementDTO> GetHistoryByUsername(string username)
+        {
+            List<QuantityMeasurementEntity> entities = repository.GetMeasurementsByUsername(username);
             return QuantityMeasurementDTO.FromEntityList(entities);
         }
 
@@ -206,7 +217,7 @@ namespace QuantityMeasurement.Service
                 QuantityMeasurementEntity entity = new QuantityMeasurementEntity(
                     operationType, first.ToString(), second.ToString(),
                     targetUnitName, resultValue.ToString(), first.MeasurementType);
-                repository.Save(entity);
+                SaveUserEntity(entity);
 
                 return new QuantityDTO(resultValue, targetUnitName, first.MeasurementType);
             }
@@ -218,7 +229,7 @@ namespace QuantityMeasurement.Service
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     operationType, ex.Message, first?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException(
                     $"{operationType} failed: " + ex.Message, ex);
             }
@@ -226,10 +237,16 @@ namespace QuantityMeasurement.Service
             {
                 QuantityMeasurementEntity errorEntity = new QuantityMeasurementEntity(
                     operationType, ex.Message, first?.MeasurementType ?? "N/A");
-                repository.Save(errorEntity);
+                SaveUserEntity(errorEntity);
                 throw new QuantityMeasurementException(
                     $"{operationType} failed: " + ex.Message, ex);
             }
+        }
+
+        private void SaveUserEntity(QuantityMeasurementEntity entity)
+        {
+            entity.Username = httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Guest";
+            repository.Save(entity);
         }
 
         private static void ValidateNotNull(QuantityDTO dto, string name)

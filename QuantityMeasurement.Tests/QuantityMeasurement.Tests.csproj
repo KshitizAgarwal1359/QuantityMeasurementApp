@@ -23,4 +23,4 @@
     <ProjectReference Include="..\QuantityMeasurement.Controllers\QuantityMeasurement.Controllers.csproj" />
     <ProjectReference Include="..\QuantityMeasurement.WebApi\QuantityMeasurement.WebApi.csproj" />
   </ItemGroup>
-</Project>
+<ItemGroup><FrameworkReference Include="Microsoft.AspNetCore.App" /></ItemGroup></Project>

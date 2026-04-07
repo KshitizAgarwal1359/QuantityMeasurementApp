@@ -23,6 +23,9 @@ namespace QuantityMeasurement.WebApi
             // Register EF Core with SQL Server
             builder.Services.AddDbContext<QuantityMeasurementDbContext>(ConfigureDbContext);
 
+            // Register HttpContextAccessor
+            builder.Services.AddHttpContextAccessor();
+
             // Register Repository via DI
             builder.Services.AddScoped<IQuantityMeasurementRepository, QuantityMeasurementEfRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
