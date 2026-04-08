@@ -84,8 +84,24 @@ namespace QuantityMeasurement.WebApi
             if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
             {
                 // Production — Render PostgreSQL
-                string connectionString = configuration.GetConnectionString("DefaultConnection")!;
-                options.UseNpgsql(connectionString);
+                string connectionUrl = configuration.GetConnectionString("DefaultConnection")!;
+                string npgsqlConnectionString = connectionUrl;
+
+                // Handle Render's format: postgres://user:password@host/dbname
+                if (connectionUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+                {
+                    var uri = new Uri(connectionUrl);
+                    var userInfo = uri.UserInfo.Split(':');
+
+                    npgsqlConnectionString = $"Host={uri.Host};" +
+                                             $"Port={(uri.Port > 0 ? uri.Port : 5432)};" +
+                                             $"Database={uri.LocalPath.Substring(1)};" +
+                                             $"Username={userInfo[0]};" +
+                                             $"Password={userInfo[1]};" +
+                                             $"Ssl Mode=Prefer;Trust Server Certificate=true;";
+                }
+
+                options.UseNpgsql(npgsqlConnectionString);
             }
             else
             {
