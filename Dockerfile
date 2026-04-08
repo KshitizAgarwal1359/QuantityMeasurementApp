@@ -26,5 +26,7 @@ COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:${PORT:-5009}
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 
 ENTRYPOINT ["dotnet", "QuantityMeasurement.WebApi.dll"]
