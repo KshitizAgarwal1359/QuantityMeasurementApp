@@ -84,22 +84,35 @@ namespace QuantityMeasurement.WebApi
             if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
             {
                 // Production — Render PostgreSQL
-                string connectionUrl = configuration.GetConnectionString("DefaultConnection")!;
+                // Render often passes it as DATABASE_URL, or the user puts it in ConnectionStrings__DefaultConnection
+                string connectionUrl = configuration["DATABASE_URL"] ?? configuration.GetConnectionString("DefaultConnection") ?? "";
+                
+                // Extremely clean the string to remove any quotes or leading/trailing whitespace
+                connectionUrl = connectionUrl.Trim().Trim('"', '\'');
+                
                 string npgsqlConnectionString = connectionUrl;
 
-                // Handle Render's format: postgres://user:password@host/dbname
-                if (connectionUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+                // Handle Render's format: postgres://... or postgresql://...
+                if (connectionUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) || 
+                    connectionUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
                 {
                     var uri = new Uri(connectionUrl);
                     var userInfo = uri.UserInfo.Split(':');
+                    
+                    string username = userInfo.Length > 0 ? userInfo[0] : "";
+                    string password = userInfo.Length > 1 ? userInfo[1] : "";
 
                     npgsqlConnectionString = $"Host={uri.Host};" +
                                              $"Port={(uri.Port > 0 ? uri.Port : 5432)};" +
-                                             $"Database={uri.LocalPath.Substring(1)};" +
-                                             $"Username={userInfo[0]};" +
-                                             $"Password={userInfo[1]};" +
+                                             $"Database={uri.LocalPath.TrimStart('/')};" +
+                                             $"Username={username};" +
+                                             $"Password={password};" +
                                              $"Ssl Mode=Prefer;Trust Server Certificate=true;";
                 }
+                
+                // Extra failsafe against 'sslmode' parameters in the URL which Npgsql might choke on if not parsed properly
+                if(npgsqlConnectionString.Contains("?"))
+                    npgsqlConnectionString = npgsqlConnectionString.Substring(0, npgsqlConnectionString.IndexOf('?'));
 
                 options.UseNpgsql(npgsqlConnectionString);
             }
