@@ -20,7 +20,7 @@ namespace QuantityMeasurement.WebApi
             var builder = WebApplication.CreateBuilder(args);
             configuration = builder.Configuration;
 
-            // Register EF Core with SQL Server
+            // Register EF Core with PostgreSQL
             builder.Services.AddDbContext<QuantityMeasurementDbContext>(ConfigureDbContext);
 
             // Register HttpContextAccessor
@@ -61,14 +61,11 @@ namespace QuantityMeasurement.WebApi
                 db.Database.EnsureCreated();
             }
 
-            // Enable Swagger in development
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(ConfigureSwaggerUI);
-            }
+            // Enable Swagger in all environments
+            app.UseSwagger();
+            app.UseSwaggerUI(ConfigureSwaggerUI);
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection(); // Disabled — Render handles SSL
             app.UseCors();
 
             // UC18: Authentication and Authorization middleware
@@ -79,11 +76,23 @@ namespace QuantityMeasurement.WebApi
             app.Run();
         }
 
-        // Configuration methods
+        // Configuration methods — dual DB support (SQL Server local, PostgreSQL production)
         private static void ConfigureDbContext(DbContextOptionsBuilder options)
         {
-            string connectionString = configuration.GetConnectionString("SqlServer")!;
-            options.UseSqlServer(connectionString);
+            string provider = configuration["DatabaseProvider"] ?? "SqlServer";
+
+            if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                // Production — Render PostgreSQL
+                string connectionString = configuration.GetConnectionString("DefaultConnection")!;
+                options.UseNpgsql(connectionString);
+            }
+            else
+            {
+                // Local development — SQL Server Express
+                string connectionString = configuration.GetConnectionString("SqlServer")!;
+                options.UseSqlServer(connectionString);
+            }
         }
 
         // UC18: Configure JWT Bearer authentication
