@@ -2,21 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
 
-# Copy project files first (layer caching)
-COPY QuantityMeasurementApp.slnx .
-COPY QuantityMeasurement/QuantityMeasurement.csproj QuantityMeasurement/
-COPY QuantityMeasurement.Models/QuantityMeasurement.Models.csproj QuantityMeasurement.Models/
-COPY QuantityMeasurement.Repository/QuantityMeasurement.Repository.csproj QuantityMeasurement.Repository/
-COPY QuantityMeasurement.Service/QuantityMeasurement.Service.csproj QuantityMeasurement.Service/
-COPY QuantityMeasurement.Controllers/QuantityMeasurement.Controllers.csproj QuantityMeasurement.Controllers/
-COPY QuantityMeasurement.WebApi/QuantityMeasurement.WebApi.csproj QuantityMeasurement.WebApi/
-COPY QuantityMeasurement.Tests/QuantityMeasurement.Tests.csproj QuantityMeasurement.Tests/
-
-# Restore
-RUN dotnet restore QuantityMeasurementApp.slnx
-
-# Copy everything and publish
+# Copy everything
 COPY . .
+
+# Restore based on WebApi main project (will pull in others via reference)
+RUN dotnet restore QuantityMeasurement.WebApi/QuantityMeasurement.WebApi.csproj
+
+# Publish
 RUN dotnet publish QuantityMeasurement.WebApi/QuantityMeasurement.WebApi.csproj -c Release -o /app/publish
 
 # Runtime stage
