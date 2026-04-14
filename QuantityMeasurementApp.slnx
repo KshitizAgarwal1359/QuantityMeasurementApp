@@ -1,9 +1,6 @@
 <Solution>
-  <Project Path="QuantityMeasurement/QuantityMeasurement.csproj" />
-  <Project Path="QuantityMeasurement.Models/QuantityMeasurement.Models.csproj" />
-  <Project Path="QuantityMeasurement.Repository/QuantityMeasurement.Repository.csproj" />
-  <Project Path="QuantityMeasurement.Service/QuantityMeasurement.Service.csproj" />
-  <Project Path="QuantityMeasurement.Controllers/QuantityMeasurement.Controllers.csproj" />
-  <Project Path="QuantityMeasurement.Tests/QuantityMeasurement.Tests.csproj" />
-  <Project Path="QuantityMeasurement.WebApi/QuantityMeasurement.WebApi.csproj" />
+  <Project Path="Presentation.API/Presentation.API.csproj" />
+  <Project Path="BusinessLogic.API/BusinessLogic.API.csproj" />
+  <Project Path="DataRepository.API/DataRepository.API.csproj" />
+  <Project Path="QuantityMeasurementApp.Tests/QuantityMeasurementApp.Tests.csproj" />
 </Solution>

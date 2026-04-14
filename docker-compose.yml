@@ -1,0 +1,69 @@
+# UC21: Docker Compose — Orchestrate all 3 microservices + PostgreSQL
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: qma-postgres
+    environment:
+      POSTGRES_DB: quantitymeasurementdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # DataRepository.API — Port 5002
+  datarepository-api:
+    build:
+      context: .
+      dockerfile: DataRepository.API/Dockerfile
+    container_name: qma-datarepository
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_URLS=http://+:5002
+      - DatabaseProvider=PostgreSQL
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=quantitymeasurementdb;Username=postgres;Password=postgres;
+    depends_on:
+      - postgres
+
+  # BusinessLogic.API — Port 5001
+  businesslogic-api:
+    build:
+      context: .
+      dockerfile: BusinessLogic.API/Dockerfile
+    container_name: qma-businesslogic
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_URLS=http://+:5001
+      - ServiceUrls__DataRepositoryAPI=http://datarepository-api:5002
+      - Jwt__SecretKey=QuantityMeasurementSuperSecretKey2026ForJwtAuth!!
+      - Jwt__Issuer=QuantityMeasurementAPI
+      - Jwt__Audience=QuantityMeasurementUsers
+      - Jwt__ExpirationMinutes=60
+      - Encryption__AesKey=VGhpc0lzQTMyQnl0ZUtleUZvckFFUzI1NkVuYyEhYWI=
+    depends_on:
+      - datarepository-api
+
+  # Presentation.API (API Gateway) — Port 5000
+  presentation-api:
+    build:
+      context: .
+      dockerfile: Presentation.API/Dockerfile
+    container_name: qma-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - ReverseProxy__Clusters__businesslogic-cluster__Destinations__businesslogic-api__Address=http://businesslogic-api:5001
+      - ReverseProxy__Clusters__datarepository-cluster__Destinations__datarepository-api__Address=http://datarepository-api:5002
+    depends_on:
+      - businesslogic-api
+      - datarepository-api
+
+volumes:
+  pgdata:
